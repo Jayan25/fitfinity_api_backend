@@ -1,0 +1,58 @@
+# Logs
+logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# Environment variables
+.env
+.env.local
+.env.*.local
+
+# Runtime data
+pids
+*.pid
+*.pid.lock
+
+# Directory for local modules
+node_modules/
+
+# Build outputs
+dist/
+build/
+
+# Dependency directories
+jspm_packages/
+
+# Coverage directories
+coverage/
+*.lcov
+
+# IDE/Editor files
+.vscode/
+.idea/
+*.sublime-project
+*.sublime-workspace
+
+# OS generated files
+.DS_Store
+Thumbs.db
+
+# Miscellaneous
+*.swp
+*.swo
+*.bak
+*.tmp
+
+# AWS Credentials
+.aws/
+.credentials
+
+# Docker
+docker-compose.override.yml
+.dockerignore
+
+# Debugger
+*.log.[0-9]*
