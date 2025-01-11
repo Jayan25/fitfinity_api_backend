@@ -2,14 +2,23 @@ const fs = require('fs');
 const path = require('path');
 const Sequelize = require('sequelize');
 const basename = path.basename(__filename);
+const dotenv = require("dotenv");
+dotenv.config();
 const db = {};
 
+// let config = {
+//   host: "127.0.0.1",
+//   username: "root",
+//   password: "",
+//   database: "fitfinity_local",
+//   dialect: "mysql",
+// };
 let config = {
-  host: "127.0.0.1",
-  username: "root",
-  password: "",
-  database: "fitfinity_local",
-  dialect: "mysql",
+  host: process.env.MYSQL_HOST,
+  username:  process.env.MYSQL_USER,
+  password: process.env.MYSQL_PASSWORD,
+  database:  process.env.MYSQL_DATABASE,
+  dialect:  process.env.DIALECT,
 };
 
 const sequelize = new Sequelize(
