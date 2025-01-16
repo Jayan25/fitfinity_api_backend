@@ -1,11 +1,11 @@
 const AWS = require('aws-sdk');
 
-export async function generateSignedUploadUrl(payload) {
+async function generateSignedUploadUrl(payload) {
   let { bucketName, expiresIn, key } = payload;
   AWS.config.update({
-      accessKeyId: 'AKIAW3MED4D62TMUNEWN',
-      secretAccessKey: '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',
-      // region: process.env.AWS_REGION,
+      accessKeyId:  process.env.ACCESS_KEY,
+      secretAccessKey: process.env.SECRET_ACCESS_KEY,
+      region: process.env.REGION,
   });
  
   const s3 = new AWS.S3();
@@ -17,26 +17,23 @@ export async function generateSignedUploadUrl(payload) {
       ContentType: 'image/jpg',
   };
  
-  return new Promise((resolve, reject) => {
-      s3.getSignedUrl('putObject', params, (err, url) => {
-          if (err) {
-              return reject(err);
-          }
-          resolve(url);
-      });
-  });
+  try {
+    const url = await s3.getSignedUrlPromise('putObject', params);
+    return url;
+  } catch (error) {
+    throw new Error(`Error generating signed URL: ${error.message}`);
+  }
 }
 
-
-export async function generateOrderSignedUploadUrl(payload) {
+async function generateOrderSignedUploadUrl(payload) {
     try {
       let { bucketName, expiresIn, key } = payload;
  
       const uploadUrl = await generateSignedUploadUrl({ bucketName, expiresIn: +expiresIn, key });
  
       return {
-        statusCode: HttpStatusCode.Ok,
-        message: 'driver Pre-Signed SignUp URL created',
+        statusCode: 200,
+        message: 'Pre-signed upload URL generated successfully.',
         response: { url: uploadUrl },
       };
  
@@ -46,3 +43,5 @@ export async function generateOrderSignedUploadUrl(payload) {
   }
  
  
+
+  module.exports = { generateSignedUploadUrl, generateOrderSignedUploadUrl };

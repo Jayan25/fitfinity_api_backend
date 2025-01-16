@@ -20,4 +20,7 @@ router.post("/update-lat-lon", authentication,validate(trainer.latlonValidation)
 
 router.get("/profile-detail", authentication, trainerController.profileData);
 
+router.post("/generate-signed-url",  trainerController.generateSignedUrl);
+
+
 module.exports = router;

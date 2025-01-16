@@ -2,6 +2,7 @@ const { Trainers, TrainerDocument } = require("../models/index")
 const { ReE, ReS, sendEmail } = require("../utils/util.service");
 const jwt = require("jsonwebtoken");
 const { generateToken } = require("../utils/jwtUtils");
+const { generateOrderSignedUploadUrl } = require("../utils/aws.service");
 const { UPDATE } = require("sequelize/lib/query-types");
 
 
@@ -92,7 +93,7 @@ module.exports.kyc = async function (req, res) {
       const dataToUpdate = req.body?.documents?.map((item) => ({
         trainer_id: id,
         document_type: item.name,
-        document_url: item.url,
+        document_url: `https://fitfinitybucket.s3.ap-south-1.amazonaws.com/`+item.url,
         verification_status: 'inprocess'
       }));
       console.log("dataToUpdate==========================", dataToUpdate);
@@ -211,5 +212,28 @@ module.exports.profileData = async function (req, res) {
   } catch (error) {
     console.error(error);
     return ReE(res, "Error during registration. Please try again.");
+  }
+};
+
+
+module.exports.generateSignedUrl = async function (req, res) {
+  try {
+    const { bucketName, expiresIn, key } = req.body;
+
+    if (!bucketName || !expiresIn || !key) {
+      return res.status(400).json({
+        statusCode: 400,
+        message: 'Missing required parameters: bucketName, expiresIn, or key.',
+      });
+    }
+
+    const result = await generateOrderSignedUploadUrl({ bucketName, expiresIn, key });
+    res.status(200).json(result);
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({
+      statusCode: 500,
+      message: error.message || 'Internal Server Error',
+    });
   }
 };
