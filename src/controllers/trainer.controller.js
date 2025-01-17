@@ -104,8 +104,8 @@ module.exports.kyc = async function (req, res) {
         {
           kyc_status:"inprocess"
         },
-        {
-          trainer_id: id
+        where = {
+          id: id
         }
       )
 
