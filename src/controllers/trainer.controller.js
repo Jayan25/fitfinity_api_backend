@@ -81,7 +81,7 @@ module.exports.kyc = async function (req, res) {
 
     } else {
 
-      console.log("TrainerDocument=============",TrainerDocument)
+      console.log("TrainerDocument=============", TrainerDocument)
       let findDocumentExist = await TrainerDocument.findOne({
         where: {
           trainer_id: id
@@ -95,17 +95,19 @@ module.exports.kyc = async function (req, res) {
       const dataToUpdate = req.body?.documents?.map((item) => ({
         trainer_id: id,
         document_type: item.name,
-        document_url: `https://fitfinitybucket.s3.ap-south-1.amazonaws.com/`+item.url,
+        document_url: `https://fitfinitybucket.s3.ap-south-1.amazonaws.com/` + item.url,
         verification_status: 'inprocess'
       }));
       console.log("dataToUpdate==========================", dataToUpdate);
       await TrainerDocument.bulkCreate(dataToUpdate);
       await Trainers.update(
         {
-          kyc_status:"inprocess"
+          kyc_status: "inprocess"
         },
-        where = {
-          id: id
+        {
+          where: {
+            id: id
+          }
         }
       )
 
@@ -173,7 +175,7 @@ module.exports.trainerStatus = async function (req, res) {
 module.exports.latlonUpdation = async function (req, res) {
   try {
     const { id } = req.user;
-    const { lat,lon } = req.body;
+    const { lat, lon } = req.body;
     let findTrainer = await Trainers.findOne({
       where: {
         id: id
@@ -183,12 +185,12 @@ module.exports.latlonUpdation = async function (req, res) {
     if (!findTrainer) {
       return ReE(res, "Trainer not found!", 400)
     }
-    console.log("findTrainer===================",findTrainer)
+    console.log("findTrainer===================", findTrainer)
     let dataData = {
       lat,
       lon
     }
-    await Trainers.update(dataData, { where: {id} })
+    await Trainers.update(dataData, { where: { id } })
 
     return ReS(res, "Trainer lat lon updated");
   } catch (error) {
@@ -201,7 +203,7 @@ module.exports.latlonUpdation = async function (req, res) {
 module.exports.profileData = async function (req, res) {
   try {
     const { id } = req.user;
-    
+
     let findTrainer = await Trainers.findOne({
       where: {
         id: id
@@ -211,7 +213,7 @@ module.exports.profileData = async function (req, res) {
           model: TrainerDocument,
           as: 'trainer_documents',
           required: false,
-          where:{document_type:"training_photo"}
+          where: { document_type: "training_photo" }
         },
       ],
     });
@@ -219,15 +221,15 @@ module.exports.profileData = async function (req, res) {
     if (!findTrainer) {
       return ReE(res, "Trainer not found!", 400);
     }
-    let response=JSON.parse(JSON.stringify(findTrainer));
+    let response = JSON.parse(JSON.stringify(findTrainer));
     delete response.otp;
     delete response.password;
     delete response.created_at;
     delete response.updated_at;
     delete response.id;
-    response.rating=null;
-     
-    return ReS(res, "Trainer data retrived",response);
+    response.rating = null;
+
+    return ReS(res, "Trainer data retrived", response);
   } catch (error) {
     console.error(error);
     return ReE(res, "Error during registration. Please try again.");
