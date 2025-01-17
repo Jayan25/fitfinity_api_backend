@@ -222,12 +222,15 @@ module.exports.profileData = async function (req, res) {
       return ReE(res, "Trainer not found!", 400);
     }
     let response = JSON.parse(JSON.stringify(findTrainer));
+    console.log(response)
     delete response.otp;
     delete response.password;
     delete response.created_at;
     delete response.updated_at;
     delete response.id;
     response.rating = null;
+    response.traning_photo = response?.trainer_documents.length>0?response?.trainer_documents[0].document_url: null;
+    delete response?.trainer_documents;
 
     return ReS(res, "Trainer data retrived", response);
   } catch (error) {
