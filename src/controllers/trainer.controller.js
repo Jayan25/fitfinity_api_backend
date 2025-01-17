@@ -80,6 +80,8 @@ module.exports.kyc = async function (req, res) {
       )
 
     } else {
+
+      console.log("TrainerDocument=============",TrainerDocument)
       let findDocumentExist = await TrainerDocument.findOne({
         where: {
           trainer_id: id
@@ -98,6 +100,14 @@ module.exports.kyc = async function (req, res) {
       }));
       console.log("dataToUpdate==========================", dataToUpdate);
       await TrainerDocument.bulkCreate(dataToUpdate);
+      await Trainers.update(
+        {
+          kyc_status:"inprocess"
+        },
+        {
+          trainer_id: id
+        }
+      )
 
     }
 
@@ -196,6 +206,14 @@ module.exports.profileData = async function (req, res) {
       where: {
         id: id
       },
+      include: [
+        {
+          model: TrainerDocument,
+          as: 'trainer_documents',
+          required: false,
+          where:{document_type:"training_photo"}
+        },
+      ],
     });
 
     if (!findTrainer) {
@@ -207,6 +225,7 @@ module.exports.profileData = async function (req, res) {
     delete response.created_at;
     delete response.updated_at;
     delete response.id;
+    response.rating=null;
      
     return ReS(res, "Trainer data retrived",response);
   } catch (error) {
