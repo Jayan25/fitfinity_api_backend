@@ -73,7 +73,7 @@ module.exports = (sequelize, DataTypes) => {
       allowNull: true,
       defaultValue: null,
     },
-    irfc_code: {
+    ifsc_code: {
       type: DataTypes.STRING,
       allowNull: true,
       defaultValue: null,

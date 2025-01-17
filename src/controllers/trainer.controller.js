@@ -72,7 +72,7 @@ module.exports.kyc = async function (req, res) {
 
       await Trainers.update(
         {
-          education, service_type, alternate_phone, addhar_address, experience, bank_name, account_no, irfc_code: ifsc_code, education, account_holder_name, kyc_step
+          education, service_type, alternate_phone, addhar_address, experience, bank_name, account_no, ifsc_code: ifsc_code, education, account_holder_name, kyc_step
         },
         {
           where
@@ -127,10 +127,10 @@ module.exports.login = async function (req, res) {
     }
     const token = generateToken(findTrainer)
 
-    return ReS(res, "Registration successful, Email is sent!", { token: token, type: 'bearer' });
+    return ReS(res, "Login is successfully done!", { token: token, type: 'bearer' });
   } catch (error) {
     console.error(error);
-    return ReE(res, "Error during registration. Please try again.");
+    return ReE(res, "Error during login. Please try again.");
   }
 };
 
@@ -153,7 +153,7 @@ module.exports.trainerStatus = async function (req, res) {
       kyc_status: findTrainer.kyc_status
     }
 
-    return ReS(res, "Trainer detail found", resopnse);
+    return ReS(res, "Trainer detail", resopnse);
   } catch (error) {
     console.error(error);
     return ReE(res, "Error during registration. Please try again.");
@@ -208,7 +208,7 @@ module.exports.profileData = async function (req, res) {
     delete response.updated_at;
     delete response.id;
      
-    return ReS(res, "Trainer lat lon updated",response);
+    return ReS(res, "Trainer data retrived",response);
   } catch (error) {
     console.error(error);
     return ReE(res, "Error during registration. Please try again.");
