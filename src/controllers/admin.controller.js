@@ -1,4 +1,4 @@
-const { Trainers, Admins } = require("../models/index")
+const { Trainers, Admins,TrainerDocument } = require("../models/index")
 const { ReE, ReS } = require("../utils/util.service");
 const { generateToken } = require("../utils/jwtUtils");
 const { off } = require("../../app");
@@ -78,6 +78,13 @@ module.exports.getTrainerDetails = async function (req, res) {
     const trainer = await Trainers.findOne({
       where: { id },
       paranoid: false,
+      include: [
+        {
+          model: TrainerDocument,
+          as: 'trainer_documents',
+          required: false,
+        },
+      ],
     });
 
 
@@ -151,18 +158,33 @@ module.exports.blockUnblock = async function (req, res) {
 module.exports.updateDocument = async function (req, res) {
   try {
     const { id } = req.params;
-    const { status } = req.body;
+    const { verification_status } = req.body;
     if (!id || isNaN(id)) {
       return ReE(res, "Invalid trainer ID provided", 400)
     }
 
 
-    let data = await Trainers.update(
-      { verification_status: verification_status },
-      { where: { id } }
-    );
+    // let data = await Trainers.update(
+    //   { verification_status: verification_status },
+    //   { where: { id } }
+    // );
 
-    return ReS(res, "Trainer documnet updated successfully")
+    console.log("id=======",id)
+    let where={
+      id:id
+    }
+   let data= await TrainerDocument.update({
+      verfication_status:verification_status
+    },
+    {
+      where
+    }
+    )
+
+    console.log("data===========",data)
+    
+
+    return ReS(res, "Trainer documnet status updated!")
 
   } catch (error) {
     console.error("Error while updating trainer", error);

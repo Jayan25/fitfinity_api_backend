@@ -8,11 +8,11 @@ const admin = require("../validations/admin.js")
 
 // login
 router.post("/login", validate(admin.loginValidation), adminController.login);
-router.get("/trainer-list", validate(admin.trainerListValidation), adminController.getAllTrainers);
-router.get("/trainer-detail/:id", adminController.getTrainerDetails);
-router.delete("/delete-trainer/:id", adminController.deleteTrainer);
-router.patch("/block-trainer/:id", validate(admin.blockUnblockValidation), adminController.blockUnblock);
-router.patch("/update-document/:id",validate(admin.verifyDocumnetValidation), adminController.updateDocument);
+router.get("/trainer-list",authentication, validate(admin.trainerListValidation), adminController.getAllTrainers);
+router.get("/trainer-detail/:id",authentication, adminController.getTrainerDetails);
+router.delete("/delete-trainer/:id",authentication, adminController.deleteTrainer);
+router.patch("/block-trainer/:id",authentication, validate(admin.blockUnblockValidation), adminController.blockUnblock);
+router.patch("/update-document/:id",authentication,validate(admin.verifyDocumnetValidation), adminController.updateDocument);
 
 
 module.exports = router;

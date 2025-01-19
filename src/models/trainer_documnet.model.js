@@ -20,7 +20,7 @@ module.exports = (sequelize, DataTypes) => {
       type: DataTypes.STRING,
       allowNull: false,
     },
-    verification_status: { 
+    verfication_status: { 
       type: DataTypes.ENUM('not uploaded', 'pending', 'success', 'failed'),
       allowNull: true,
       defaultValue: 'not uploaded',

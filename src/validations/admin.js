@@ -35,7 +35,6 @@ module.exports = {
         body: Joi.object(
             {
                 verification_status: Joi.string().valid("success", "failed").required()
-
             }
         )
     },
