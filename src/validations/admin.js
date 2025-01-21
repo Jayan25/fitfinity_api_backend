@@ -38,5 +38,12 @@ module.exports = {
             }
         )
     },
+    verifyTrainerValidation: {
+        body: Joi.object(
+            {
+                kyc_status: Joi.string().valid("done", "failed").required()
+            }
+        )
+    },
 
 }

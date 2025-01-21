@@ -8,11 +8,17 @@ const admin = require("../validations/admin.js")
 
 // login
 router.post("/login", validate(admin.loginValidation), adminController.login);
+
+//trainer
 router.get("/trainer-list",authentication, validate(admin.trainerListValidation), adminController.getAllTrainers);
 router.get("/trainer-detail/:id",authentication, adminController.getTrainerDetails);
 router.delete("/delete-trainer/:id",authentication, adminController.deleteTrainer);
 router.patch("/block-trainer/:id",authentication, validate(admin.blockUnblockValidation), adminController.blockUnblock);
 router.patch("/update-document/:id",authentication,validate(admin.verifyDocumnetValidation), adminController.updateDocument);
+router.patch("/verify-kyc-step-trainer/:id",authentication,validate(admin.verifyTrainerValidation), adminController.verifyTrainerKyc);
+
+
+//user
 
 
 module.exports = router;

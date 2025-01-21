@@ -127,7 +127,7 @@ CREATE TABLE TrainerDocument (
     id BIGINT AUTO_INCREMENT PRIMARY KEY,
     trainer_id BIGINT NOT NULL, -- Foreign key referencing `trainers.id`
     document_type ENUM('aadhar', 'pan', 'certificate', 'training_photo'),
-    verfication_status ENUM('not uploaded', 'pending', 'success', 'failed') DEFAULT 'not uploaded',
+    verfication_status ENUM('not uploaded', 'pending', 'success', 'failed') DEFAULT 'pending',
     created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
     updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     deleted_at DATETIME,

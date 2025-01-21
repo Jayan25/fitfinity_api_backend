@@ -191,6 +191,33 @@ module.exports.updateDocument = async function (req, res) {
     return ReE(res, "An error occurred while updating the trainer", 500)
   }
 };
+module.exports.verifyTrainerKyc = async function (req, res) {
+  try {
+    const { id } = req.params;
+    const { kyc_status } = req.body;
+    if (!id || isNaN(id)) {
+      return ReE(res, "Invalid trainer ID provided", 400)
+    }
+
+    let trainerData=await Trainers.findOne({where:{id}});
+
+    if(!trainerData)
+    {
+      return ReE(res,"Trainer not found!",404);
+    }
+     await Trainers.update(
+      { kyc_status: kyc_status },
+      { where: { id } }
+    );
+
+
+    return ReS(res, "Trainer key status updated!")
+
+  } catch (error) {
+    console.error("Error while updating trainer", error);
+    return ReE(res, "An error occurred while updating the trainer", 500)
+  }
+};
 
 
 
