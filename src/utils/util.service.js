@@ -33,7 +33,7 @@ module.exports.sendEmail = async function (emailData) {
     from: "adityapandey272002@gmail.com",
     to: `${emailData.email}`,
     subject: "Registration Success on Fitfinity!!",
-    text: "Congraludation your resigtraion is successfully done on Fitfinity. Clickk here to download the app and complete the KYC"
+    text: "Congratulation your resigtraion is successfully done on Fitfinity. Clickk here to download the app and complete the KYC"
   }
   transporter.sendMail(receiver, (error, emailResponse) => {
     if (error) {
