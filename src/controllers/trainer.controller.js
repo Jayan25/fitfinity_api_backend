@@ -96,13 +96,19 @@ module.exports.kyc = async function (req, res) {
         trainer_id: id,
         document_type: item.name,
         document_url: `https://fitfinitybucket.s3.ap-south-1.amazonaws.com/` + item.url,
-        verification_status: 'pending'
+        verification_status: 'success'
       }));
+      // const dataToUpdate = req.body?.documents?.map((item) => ({
+      //   trainer_id: id,
+      //   document_type: item.name,
+      //   document_url: `https://fitfinitybucket.s3.ap-south-1.amazonaws.com/` + item.url,
+      //   verification_status: 'pending'
+      // }));
       console.log("dataToUpdate==========================", dataToUpdate);
       await TrainerDocument.bulkCreate(dataToUpdate);
       await Trainers.update(
         {
-          kyc_status: "inprocess"
+          kyc_status: "done"
         },
         {
           where: {
