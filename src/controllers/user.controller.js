@@ -45,15 +45,18 @@
       if (!users) {
         return ReE(res, "Email not found.", 400);
       }
-  
+      
     
       if (password!=users.password) {
         return ReE(res, "Incorrect password.", 400);
       }
       let token=generateToken(users)
+
+      let user=JSON.parse(JSON.stringify(users))
+      delete user.password
   
       return ReS(res, "Login successful.", {
-        user: users,
+        user: user,
         authorisation: {
           token,
           type: "bearer",

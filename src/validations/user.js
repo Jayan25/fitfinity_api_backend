@@ -87,10 +87,5 @@ module.exports = {
             lon: Joi.number().required().min(-180).max(180),
         }),
     },
-    deletePendingPayment:{
-        body: Joi.object({
-            payment_id:  Joi.number().required()
-        }),
-    }
 
 }
