@@ -1,4 +1,4 @@
-const { Trainers, TrainerDocument } = require("../models/index")
+const { Trainers, TrainerDocument,Versions } = require("../models/index")
 const { ReE, ReS, sendEmail } = require("../utils/util.service");
 const jwt = require("jsonwebtoken");
 const { generateToken } = require("../utils/jwtUtils");

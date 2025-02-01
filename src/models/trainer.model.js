@@ -132,7 +132,14 @@ module.exports = (sequelize, DataTypes) => {
       as: 'trainer_documents',
       constraints: false,
     });
+
+    Trainers.hasMany(models.service_bookings, {
+      foreignKey: "trainer_id",
+      as: "service_bookings",
+      constraints: false, 
+    });
   }
+  
 
   return Trainers;
 }

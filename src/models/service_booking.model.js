@@ -1,80 +1,117 @@
 'use strict';
 
 module.exports = (sequelize, DataTypes) => {
-  const ServiceBooking = sequelize.define(
-    "ServiceBooking",
-    {
-      user_id: {
-        type: DataTypes.INTEGER,
-        allowNull: false,
-      },
-      service_type: {
-        type: DataTypes.STRING,
-        allowNull: false,
-      },
-      name: {
-        type: DataTypes.STRING,
-        allowNull: false,
-      },
-      email: {
-        type: DataTypes.STRING,
-        allowNull: false,
-      },
-      mobile: {
-        type: DataTypes.STRING,
-        allowNull: false,
-      },
-      date: {
-        type: DataTypes.DATEONLY, 
-        allowNull: false,
-      },
-      date_of_birth: {
-        type: DataTypes.DATEONLY,
-      },
-      time_of_birth: {
-        type: DataTypes.TIME, 
-      },
-      star: {
-        type: DataTypes.STRING,
-      },
-      gotram: {
-        type: DataTypes.STRING,
-      },
-      requirement_of_puja: {
-        type: DataTypes.TEXT,
-      },
-      problem: {
-        type: DataTypes.TEXT,
-      },
-      muhurtham: {
-        type: DataTypes.STRING,
-      },
-      muhurtham_place: {
-        type: DataTypes.STRING,
-      },
-      details: {
-        type: DataTypes.TEXT,
-      },
-      address: {
-        type: DataTypes.TEXT,
-      },
-      currency_type: {
-        type: DataTypes.STRING,
-        defaultValue: "IND",
-      },
-      amount: {
-        type: DataTypes.DECIMAL(10, 2), 
-        allowNull: false,
-      },
-      number_of_gows: {
-        type: DataTypes.INTEGER,
-      },
+  const service_bookings = sequelize.define("service_bookings", {
+    id: {
+      type: DataTypes.BIGINT,
+      primaryKey: true,
+      autoIncrement: true,
     },
-    {
-      timestamps: true, 
-      tableName: "service_bookings", 
+    user_id: {
+      type: DataTypes.BIGINT, // No references
+      allowNull: false,
+    },
+    trainer_id: {
+      type: DataTypes.BIGINT, // No references
+      allowNull: true,
+    },
+    booking_name: {
+      type: DataTypes.STRING,
+      allowNull: false,
+    },
+    service_type: {
+      type: DataTypes.ENUM("fitness", "yoga", "diet"),
+      allowNull: false,
+    },
+    preferred_time_to_be_served: {
+      type: DataTypes.TIME,
+      allowNull: false,
+    },
+    training_for: {
+      type: DataTypes.ENUM("male", "female", "couple", "group"),
+      allowNull: false,
+    },
+    trial_date: {
+      type: DataTypes.DATE,
+      allowNull: false,
+    },
+    trial_time: {
+      type: DataTypes.TIME,
+      allowNull: false,
+    },
+    trainer_type: {
+      type: DataTypes.ENUM("basic", "standard", "premium", "couple/group"),
+      allowNull: false,
+    },
+    training_needed_for: {
+      type: DataTypes.ENUM("self", "other"),
+      allowNull: false,
+    },
+    payment_status: {
+      type: DataTypes.ENUM("pending", "inprocess", "failed", "success"),
+      allowNull: false,
+    },
+    name: {
+      type: DataTypes.STRING,
+      allowNull: true,
+    },
+    contact_number: {
+      type: DataTypes.STRING,
+      allowNull: true,
+    },
+    address: {
+      type: DataTypes.STRING,
+      allowNull: true,
+    },
+    landmark: {
+      type: DataTypes.STRING,
+      allowNull: true,
+    },
+    area: {
+      type: DataTypes.STRING,
+      allowNull: true,
+    },
+    pincode: {
+      type: DataTypes.STRING,
+      allowNull: true,
+    },
+    trial_taken: {
+      type: DataTypes.BOOLEAN,
+      allowNull: false,
+      defaultValue: false,
+    },
+    service_taken: {
+      type: DataTypes.BOOLEAN,
+      allowNull: false,
+      defaultValue: false,
+    },
+    service_booking_step: {
+      type: DataTypes.ENUM("1", "2", "3", "4"),
+      allowNull: false,
     }
-  );
+  }, {
+    timestamps: true,
+    createdAt: "created_at",
+    updatedAt: "updated_at",
+    deletedAt: "deleted_at",
+    tableName: "service_bookings",
+  });
 
-  return ServiceBooking;
+  service_bookings.associate = (models) => {
+    // Relation with User (without enforcing FK in DB)
+    service_bookings.belongsTo(models.Users, {
+      foreignKey: "user_id",
+      as: "user",
+      constraints: false, // Prevents enforcing foreign key at the DB level
+    });
+
+    // Relation with Trainer (without enforcing FK in DB)
+    service_bookings.belongsTo(models.Trainers, {
+      foreignKey: "trainer_id",
+      as: "trainer",
+      constraints: false, // Prevents enforcing foreign key at the DB level
+    });
+  };
+
+  return service_bookings;
 };

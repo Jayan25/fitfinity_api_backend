@@ -4,6 +4,7 @@ const cookieParser = require("cookie-parser");
 const dotenv = require("dotenv")
 const mysql = require("mysql2")
 const Router = require("./src/routes/trainer.router.js");
+const common = require("./src/routes/common.router.js");
 const webRouter = require("./src/routes/web.router.js");
 const userRouter = require("./src/routes/user.router.js");
 const adminRouter = require("./src/routes/admin.router.js");
@@ -29,6 +30,7 @@ app.use(cookieParser());
 
 
 app.use("/trainer", Router);
+app.use("/common", common);
 app.use("/user", userRouter);
 app.use("/web", webRouter);
 app.use("/admin", adminRouter);

@@ -1,28 +1,31 @@
 -- 1
 CREATE TABLE service_bookings (
-    id INT AUTO_INCREMENT PRIMARY KEY, -- Primary Key
-    user_id INT NOT NULL,
-    service_type VARCHAR(255) NOT NULL,
-    name VARCHAR(255) NOT NULL,
-    email VARCHAR(255) NOT NULL,
-    mobile VARCHAR(20) NOT NULL,
-    date DATE NOT NULL,
-    date_of_birth DATE,
-    time_of_birth TIME,
-    star VARCHAR(255),
-    gotram VARCHAR(255),
-    requirement_of_puja TEXT,
-    problem TEXT,
-    muhurtham VARCHAR(255),
-    muhurtham_place VARCHAR(255),
-    details TEXT,
-    address TEXT,
-    currency_type VARCHAR(10) DEFAULT 'USD', -- Default value for currency
-    amount DECIMAL(10, 2) NOT NULL, -- Decimal type for monetary values
-    number_of_gows INT,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP, -- Auto timestamp for creation
-    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP -- Auto timestamp for updates
+    id BIGINT PRIMARY KEY AUTO_INCREMENT,
+    user_id BIGINT NOT NULL,  -- No foreign key constraint
+    trainer_id BIGINT NULL,   -- No foreign key constraint
+    booking_name VARCHAR(255) NOT NULL,
+    service_type ENUM('fitness', 'yoga', 'diet') NOT NULL,
+    preferred_time_to_be_served TIME NOT NULL,
+    training_for ENUM('male', 'female', 'couple', 'group') NOT NULL,
+    trial_date DATE NOT NULL,
+    trial_time TIME NOT NULL,
+    trainer_type ENUM('basic', 'standard', 'premium', 'couple/group') NOT NULL,
+    training_needed_for ENUM('self', 'other') NOT NULL,
+    payment_status ENUM('pending', 'inprocess', 'failed', 'success') NOT NULL,
+    name VARCHAR(255) NULL,
+    contact_number VARCHAR(20) NULL,
+    address VARCHAR(255) NULL,
+    landmark VARCHAR(255) NULL,
+    area VARCHAR(255) NULL,
+    pincode VARCHAR(10) NULL,
+    trial_taken BOOLEAN NOT NULL DEFAULT FALSE,
+    service_taken BOOLEAN NOT NULL DEFAULT FALSE,
+    service_booking_step ENUM('1', '2', '3', '4') NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    deleted_at TIMESTAMP NULL
 );
+
 
 
 -- 2

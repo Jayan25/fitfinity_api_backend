@@ -22,5 +22,4 @@ router.get("/profile-detail", authentication, trainerController.profileData);
 
 router.post("/generate-signed-url",  trainerController.generateSignedUrl);
 
-
 module.exports = router;
