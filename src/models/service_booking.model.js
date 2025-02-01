@@ -7,6 +7,11 @@ module.exports = (sequelize, DataTypes) => {
       primaryKey: true,
       autoIncrement: true,
     },
+    booking_name :{
+      type: DataTypes.STRING,
+      allowNull:false,
+    },
+
     user_id: {
       type: DataTypes.BIGINT, // No references
       allowNull: false,
