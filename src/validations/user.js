@@ -25,6 +25,7 @@ module.exports = {
     serviceBookingValidation: {
         body: Joi.object({
             service_booking_step: Joi.number().valid(1, 2, 3).required(),
+            booking_name: Joi.string().required(),
 
             service_type: Joi.when("service_booking_step", {
                 is: 1,
@@ -60,14 +61,14 @@ module.exports = {
 
             // Step 2: Trainer Type
             trainer_type: Joi.when("service_booking_step", {
-                is: 2,
+                is: 1,
                 then: Joi.string().valid("basic", "standard", "premium", "couple/group").required(),
                 otherwise: Joi.forbidden(),
             }),
 
             // Step 3: Training Needed For
             training_needed_for: Joi.when("service_booking_step", {
-                is: 3,
+                is: 1,
                 then: Joi.string().valid("self", "other").required(),
                 otherwise: Joi.forbidden(),
             }),

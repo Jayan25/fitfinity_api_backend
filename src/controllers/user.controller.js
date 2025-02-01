@@ -1,4 +1,4 @@
-  const {Trainers,Users} = require("../models/index")
+  const {Trainers,Users,service_bookings} = require("../models/index")
   const { ReE, ReS,createAndSendEnquiry } = require("../utils/util.service");
   const jwt = require("jsonwebtoken");
   const {generateToken}=require("../utils/jwtUtils")
@@ -70,20 +70,23 @@
 
 module.exports.createOrUpdateServiceBooking = async (req, res) => {
     try {
+      console.log("============================",req.user)
         const user_id = req.user.id;
         const { service_booking_step } = req.body;
+        console.log("ServiceBooking================",service_bookings)
 
-        let booking = await ServiceBooking.findOne({
+        let booking = await service_bookings.findOne({
           where: { user_id, payment_status: "pending" },
-          order: [["createdAt", "DESC"]]
+          order: [["created_at", "DESC"]]
       });
         if (!booking && service_booking_step !== 1) {
             return res.status(400).json({ message: "Step 1 must be completed first." });
         }
 
-         let bookingData = await ServiceBooking.create({
+         await service_bookings.create({
                 user_id,
                 service_type: req.body.service_type,
+                booking_name:req.body.booking_name,
                 preferred_time_to_be_served: req.body.preferred_time_to_be_served,
                 training_for: req.body.training_for,
                 trial_date: req.body.trial_date,
@@ -98,8 +101,7 @@ module.exports.createOrUpdateServiceBooking = async (req, res) => {
        
 
         return res.status(200).json({
-            message: `Step ${service_booking_step} completed successfully`,
-            booking,
+            message: `Booking data updated successfully`,
         });
 
     } catch (error) {
