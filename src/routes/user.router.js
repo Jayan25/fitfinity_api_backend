@@ -7,10 +7,6 @@ const {authentication} = require("../utils/jwtUtils.js");
 
 router.post("/userRegister",validate(user.userRegisterValidation), userController.SignUp);
 router.post("/userLogin",validate(user.userLoginValidation), userController.userLogin);
-
-router.post("/createOrUpdateBooking",authentication,validate(user.serviceBookingValidation), userController.createOrUpdateServiceBooking);
-router.get("/pending-payment",authentication, userController.pendingPayment);
-router.post("/delete-pending-payment",authentication,validate(user.deletePendingPayment),userController.deletePendingPayment);
 router.post("/update-lat-lon", authentication,validate(user.latlonValidation), userController.latlonUpdation);
 
 module.exports = router;

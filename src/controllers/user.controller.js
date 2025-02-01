@@ -105,51 +105,6 @@ module.exports.createOrUpdateServiceBooking = async (req, res) => {
     }
 };
 
-module.exports.pendingPayment = async (req, res) => {
-  try {
-      const user_id = req.user.id;
-
-      let booking = await ServiceBooking.findOne({
-        where: { user_id, payment_status: "pending" },
-        order: [["createdAt", "DESC"]]
-    });
-      if (!booking) {
-          return res.status(200).json({ message: "no pending payment found!" });
-      }
-
-      return res.status(200).json({
-          message:`Service booking step found`,
-          service_booking_step:booking.service_booking_step,
-      });
-
-  } catch (error) {
-      console.error("Service Booking Error:", error);
-      return res.status(500).json({ message: "Internal Server Error", error });
-  }
-};
-
-module.exports.deletePendingPayment = async (req, res) => {
-  try {
-      const user_id = req.user.id;
-
-      let booking = await ServiceBooking.findOne({
-        where: { user_id, payment_status: "pending" },
-        order: [["createdAt", "DESC"]]
-    });
-      if (!booking) {
-          return res.status(200).json({ message: "no pending payment found!" });
-      }
-      await booking.destroy(); 
-      return res.status(200).json({
-        message: `Service booking step found and soft deleted`,
-        service_booking_step: booking.service_booking_step,
-    });
-
-  } catch (error) {
-      console.error("Service Booking Error:", error);
-      return res.status(500).json({ message: "Internal Server Error", error });
-  }
-};
 
 module.exports.latlonUpdation = async function (req, res) {
   try {
