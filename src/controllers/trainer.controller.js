@@ -267,3 +267,43 @@ module.exports.generateSignedUrl = async function (req, res) {
     });
   }
 };
+
+module.exports.transaction = async (req, res) => {
+  try {
+    
+
+    return ReS(res,"Transaction Fetched success!",response={
+      count:0,
+      data:[]
+    })
+  } catch (error) {
+    console.error("Service Booking Error:", error);
+    return res.status(500).json({ message: "Internal Server Error", error });
+  }
+};
+module.exports.enquiry = async (req, res) => {
+  try {
+    
+
+    return ReS(res,"Enquiry Fetched success!",response={
+      count:0,
+      data:[]
+    })
+  } catch (error) {
+    console.error("Enquiry fetching error:", error);
+    return res.status(500).json({ message: "Internal Server Error", error });
+  }
+};
+module.exports.ongoingEnquiry = async (req, res) => {
+  try {
+    
+
+    return ReS(res,"Enquiry Fetched success!",response={
+      count:0,
+      data:[]
+    })
+  } catch (error) {
+    console.error("ongoing Enquiry fetching error:", error);
+    return res.status(500).json({ message: "Internal Server Error", error });
+  }
+};

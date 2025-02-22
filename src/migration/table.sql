@@ -137,6 +137,19 @@ CREATE TABLE TrainerDocument (
     CONSTRAINT fk_trainer_id FOREIGN KEY (trainer_id) REFERENCES trainers(id) ON DELETE CASCADE ON UPDATE CASCADE
 );
 
+-- 9 help and support table
+CREATE TABLE help_support (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    user_id BIGINT UNSIGNED NULL,
+    trainer_id BIGINT UNSIGNED NULL,
+    userType VARCHAR(255) NOT NULL,
+    query TEXT NOT NULL,
+    status ENUM('pending', 'inprogress', 'resolved') NOT NULL DEFAULT 'pending',
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    deleted_at TIMESTAMP NULL)
+
+
 
 
 

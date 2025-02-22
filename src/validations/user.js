@@ -88,5 +88,23 @@ module.exports = {
             lon: Joi.number().required().min(-180).max(180),
         }),
     },
+    natalEnquiryValidation: {
+        body: Joi.object({
+            name: Joi.string().required(), 
+            email: Joi.string().required(), 
+            address: Joi.string().required(), 
+            phone: Joi.string().required(), 
+            requirement: Joi.string().required(), 
+        }),
+    },
+    corporatePlanValidation: {
+        body: Joi.object({
+            name: Joi.string().required(), 
+            email: Joi.string().required(), 
+            phone: Joi.string().required(), 
+            requirement: Joi.string().required(), 
+            company_name: Joi.string().required(), 
+        }),
+    },
 
 }
