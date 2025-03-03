@@ -48,7 +48,6 @@ module.exports.getAllTrainers = async function (req, res) {
       where: where,
       limit,
       offset,
-      paranoid: false,
       include: [
         {
           model: TrainerDocument,
@@ -210,6 +209,16 @@ module.exports.verifyTrainerKyc = async function (req, res) {
       { where: { id } }
     );
 
+    let where={
+      trainer_id:id
+    }
+   await TrainerDocument.update({
+      verfication_status:"success"
+    },
+    {
+      where
+    }
+    )
 
     return ReS(res, "Trainer key status updated!")
 

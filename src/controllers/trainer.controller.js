@@ -108,7 +108,7 @@ module.exports.kyc = async function (req, res) {
       await TrainerDocument.bulkCreate(dataToUpdate);
       await Trainers.update(
         {
-          kyc_status: "done"
+          kyc_status: "pending"
         },
         {
           where: {
