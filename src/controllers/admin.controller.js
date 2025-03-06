@@ -48,6 +48,8 @@ module.exports.getAllTrainers = async function (req, res) {
       where: where,
       limit,
       offset,
+      order: [['created_at', 'DESC']],
+      distinct: true,
       include: [
         {
           model: TrainerDocument,
