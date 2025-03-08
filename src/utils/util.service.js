@@ -21,8 +21,8 @@ let transporter = nodemailer.createTransport({
   port: 465,
   secure: true,
   auth: {
-    user: "adityapandey272002@gmail.com",
-    pass: "jfax qkqm nfcp kyuu",
+    user: "fitfinitytrainer@gmail.com",
+    pass: "hlon bqic fvxe erhd",
   },
 });
 
@@ -30,11 +30,26 @@ let transporter = nodemailer.createTransport({
 module.exports.sendEmail = async function (emailData) {
 
   const receiver = {
-    from: "adityapandey272002@gmail.com",
-    to: `${emailData.email}`,
-    subject: "Registration Success on Fitfinity!!",
-    text: "Congratulation your resigtraion is successfully done on Fitfinity. Clickk here to download the app and complete the KYC"
-  }
+    from: "fitfinitytrainer@gmail.com",
+    to: emailData.email,
+    subject: `Congratulations & Welcome to Fitfinity Trainer, ${emailData.name}!`,
+    html: `
+      <p>Dear ${emailData.name},</p>
+  
+      <p>Congratulations and welcome to <strong>Fitfinity Trainer</strong>! We’re thrilled to have you join our team. Your passion for fitness and commitment to helping others achieve their goals make you a perfect fit for our community.</p>
+  
+      <p>At <strong>Fitfinity Trainer</strong>, we aim to provide an engaging and supportive environment where trainers like you can connect with clients, share expertise, and grow professionally.</p>
+  
+      <p>If you have any questions, our support team is always here to help. Feel free to reach out at <a href="mailto:fitfinitytrainer@gmail.com">fitfinitytrainer@gmail.com</a>.</p>
+  
+      <p>Follow us on Instagram: <a href="https://www.instagram.com/fitfinitytrainer?igsh=YmplM2c5azI1d21j&utm_source=qr" target="_blank">Fitfinity Trainer Instagram</a></p>
+  
+      <p>Once again, welcome aboard! We’re excited to see you thrive and make a positive impact.</p>
+  
+      <p>Best regards,</p>
+      <p><strong>Team Fitfinity Trainer</strong></p>
+    `,
+  };
   transporter.sendMail(receiver, (error, emailResponse) => {
     if (error) {
       console.log("Email sent failed!!", error)

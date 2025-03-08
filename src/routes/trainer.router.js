@@ -27,4 +27,7 @@ router.get("/transaction", authentication,  trainerController.transaction);
 router.get("/enquiry", authentication,  trainerController.enquiry);
 router.get("ongoing-enquiry", authentication,  trainerController.ongoingEnquiry);
 router.post("/helpAndSupport", validate(common.helpAndSuppoprt), commonController.helpAndSupport);
+router.post("/create-order", authentication, trainerController.createOrder);
+router.post("/verify-payment", authentication, trainerController.verifyPayment);
+router.post("/razorpay-webhook", trainerController.razorpayWebhook);
 module.exports = router;

@@ -1,5 +1,5 @@
 const { Trainers, Admins,TrainerDocument } = require("../models/index")
-const { ReE, ReS } = require("../utils/util.service");
+const { ReE, ReS,sendEmail } = require("../utils/util.service");
 const { generateToken } = require("../utils/jwtUtils");
 const { off } = require("../../app");
 const { Op } = require('sequelize')
@@ -221,6 +221,12 @@ module.exports.verifyTrainerKyc = async function (req, res) {
       where
     }
     )
+  let emailData = {
+    email: trainerData.email,
+    name:trainerData.name
+  }
+
+   await sendEmail(emailData)
 
     return ReS(res, "Trainer key status updated!")
 

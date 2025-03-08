@@ -4,58 +4,35 @@ module.exports = (sequelize) => {
   const Payment = sequelize.define(
     "Payment",
     {
-      id: {
-        type: DataTypes.INTEGER,
-        primaryKey: true,
-        autoIncrement: true,
-      },
       user_id: {
         type: DataTypes.INTEGER,
         allowNull: false,
       },
-      r_payment_id: {
+      trainer_id: {
+        type: DataTypes.INTEGER,
+        allowNull: false,
+      },
+      service_type: {
         type: DataTypes.STRING,
         allowNull: false,
       },
-      r_order_id: {
+      order_id: {
         type: DataTypes.STRING,
         allowNull: false,
+        unique: true,
       },
-      r_signature: {
-        type: DataTypes.STRING,
-        allowNull: true,
-      },
-      method: {
-        type: DataTypes.STRING,
-        allowNull: true,
-      },
-      currency: {
-        type: DataTypes.STRING,
-        allowNull: false,
-      },
-      user_email: {
+      payment_id: {
         type: DataTypes.STRING,
         allowNull: true,
       },
       amount: {
-        type: DataTypes.FLOAT,
+        type: DataTypes.STRING,
         allowNull: false,
-      },
-      json_response: {
-        type: DataTypes.JSON,
-        allowNull: true,
       },
       status: {
         type: DataTypes.STRING,
         allowNull: false,
-      },
-      booked_service_id: {
-        type: DataTypes.INTEGER,
-        allowNull: true,
-      },
-      service_type: {
-        type: DataTypes.STRING,
-        allowNull: true,
+        defaultValue: "pending",
       },
     },
     {
@@ -63,6 +40,18 @@ module.exports = (sequelize) => {
       tableName: "payments",
     }
   );
+
+  Payment.associate = (models) => {
+    Payment.belongsTo(models.Users, {
+      foreignKey: "user_id",
+      as: "user",
+    });
+    
+    Payment.belongsTo(models.Trainers, {
+      foreignKey: "trainer_id",
+      as: "trainer",
+    });
+  };
 
   return Payment;
 };

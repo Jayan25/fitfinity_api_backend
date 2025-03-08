@@ -101,13 +101,17 @@ module.exports = (sequelize, DataTypes) => {
     }
   );
   Users.associate = (models) => {
+    Users.hasMany(models.Payment, {
+      foreignKey: "user_id",
+      as: "payments",
+    });
+  
     Users.hasMany(models.service_bookings, {
       foreignKey: "user_id",
       as: "service_bookings",
       constraints: false, 
     });
   };
-  
 
   return Users;
 };

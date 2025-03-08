@@ -138,6 +138,10 @@ module.exports = (sequelize, DataTypes) => {
       as: "service_bookings",
       constraints: false, 
     });
+    Trainers.hasMany(models.Payment, {
+      foreignKey: "trainer_id",
+      as: "payments",
+    });
   }
   
 

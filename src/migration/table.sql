@@ -40,23 +40,38 @@ CREATE TABLE services (
 
 
 --3
+-- CREATE TABLE payments (
+--     id INT AUTO_INCREMENT PRIMARY KEY, -- Primary Key with Auto Increment
+--     user_id INT NOT NULL,              -- Foreign Key (User ID)
+--     r_payment_id VARCHAR(255) NOT NULL, -- Razorpay Payment ID
+--     r_order_id VARCHAR(255) NOT NULL,   -- Razorpay Order ID
+--     r_signature VARCHAR(255),          -- Razorpay Signature (Optional)
+--     method VARCHAR(255),               -- Payment Method (Optional)
+--     currency VARCHAR(10) NOT NULL,     -- Currency Type
+--     user_email VARCHAR(255),           -- User Email Address (Optional)
+--     amount FLOAT NOT NULL,             -- Payment Amount
+--     json_response JSON,                -- JSON Response from Gateway
+--     status VARCHAR(50) NOT NULL,       -- Payment Status
+--     booked_service_id INT,             -- Associated Booked Service ID
+--     service_type VARCHAR(255),         -- Type of Service (Optional)
+--     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP, -- Timestamp for record creation
+--     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP -- Timestamp for record updates
+-- );
+
 CREATE TABLE payments (
-    id INT AUTO_INCREMENT PRIMARY KEY, -- Primary Key with Auto Increment
-    user_id INT NOT NULL,              -- Foreign Key (User ID)
-    r_payment_id VARCHAR(255) NOT NULL, -- Razorpay Payment ID
-    r_order_id VARCHAR(255) NOT NULL,   -- Razorpay Order ID
-    r_signature VARCHAR(255),          -- Razorpay Signature (Optional)
-    method VARCHAR(255),               -- Payment Method (Optional)
-    currency VARCHAR(10) NOT NULL,     -- Currency Type
-    user_email VARCHAR(255),           -- User Email Address (Optional)
-    amount FLOAT NOT NULL,             -- Payment Amount
-    json_response JSON,                -- JSON Response from Gateway
-    status VARCHAR(50) NOT NULL,       -- Payment Status
-    booked_service_id INT,             -- Associated Booked Service ID
-    service_type VARCHAR(255),         -- Type of Service (Optional)
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP, -- Timestamp for record creation
-    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP -- Timestamp for record updates
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    user_id INT NOT NULL,
+    trainer_id INT NULL,
+    order_id VARCHAR(255) NOT NULL UNIQUE,
+    payment_id VARCHAR(255),
+    amount FLOAT NOT NULL,
+    currency VARCHAR(10) NOT NULL,
+    status VARCHAR(50) NOT NULL DEFAULT 'pending',
+    service_type VARCHAR(255),
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
 );
+
 
 
 --4
