@@ -4,8 +4,8 @@ const jwt = require("jsonwebtoken");
 const { generateToken } = require("../utils/jwtUtils");
 const { generateOrderSignedUploadUrl } = require("../utils/aws.service");
 const { UPDATE } = require("sequelize/lib/query-types");
-const Razorpay = require("razorpay");
-const crypto = require("crypto");
+// const Razorpay = require("razorpay");
+// const crypto = require("crypto");
 const dotenv = require("dotenv");
 dotenv.config();
 
@@ -308,107 +308,107 @@ module.exports.ongoingEnquiry = async (req, res) => {
   }
 };
 
-const razorpay = new Razorpay({
-  key_id: process.env.RAZORPAY_KEY_ID,
-  key_secret: process.env.RAZORPAY_KEY_SECRET,
-});
+// const razorpay = new Razorpay({
+//   key_id: process.env.RAZORPAY_KEY_ID,
+//   key_secret: process.env.RAZORPAY_KEY_SECRET,
+// });
 
-const SERVICE_PRICES = {
-  "fitness_trainer": 5000,
-  "yoga_trainer": 4000,
-  "weight_loss_trainer": 6000,
-  "kickboxing_trainer": 4500,
-  "mma_trainer": 7000,
-  "cardio_trainer": 5500,
-};
+// const SERVICE_PRICES = {
+//   "fitness_trainer": 5000,
+//   "yoga_trainer": 4000,
+//   "weight_loss_trainer": 6000,
+//   "kickboxing_trainer": 4500,
+//   "mma_trainer": 7000,
+//   "cardio_trainer": 5500,
+// };
 
-module.exports.createOrder = async (req, res) => {
-  try {
-    const { service_type } = req.body;
-    if (!SERVICE_PRICES[service_type]) {
-      return res.status(400).json({ error: "Invalid service type" });
-    }
+// module.exports.createOrder = async (req, res) => {
+//   try {
+//     const { service_type } = req.body;
+//     if (!SERVICE_PRICES[service_type]) {
+//       return res.status(400).json({ error: "Invalid service type" });
+//     }
 
-    const amount = SERVICE_PRICES[service_type] * 100; // Convert to paise
-    const order = await razorpay.orders.create({
-      amount,
-      currency: "INR",
-      receipt: `receipt_${Date.now()}`,
-      payment_capture: 1, // Auto capture payment
-    });
+//     const amount = SERVICE_PRICES[service_type] * 100; // Convert to paise
+//     const order = await razorpay.orders.create({
+//       amount,
+//       currency: "INR",
+//       receipt: `receipt_${Date.now()}`,
+//       payment_capture: 1, // Auto capture payment
+//     });
 
-    // Store order in DB
-    await Payments.create({
-      user_id: req.user.id,
-      service_type,
-      order_id: order.id,
-      amount,
-      status: "pending",
-    });
+//     // Store order in DB
+//     await Payments.create({
+//       user_id: req.user.id,
+//       service_type,
+//       order_id: order.id,
+//       amount,
+//       status: "pending",
+//     });
 
-    return res.json({ success: true, order_id: order.id, amount });
-  } catch (error) {
-    console.error(error);
-    return res.status(500).json({ error: "Failed to create order" });
-  }
-};
+//     return res.json({ success: true, order_id: order.id, amount });
+//   } catch (error) {
+//     console.error(error);
+//     return res.status(500).json({ error: "Failed to create order" });
+//   }
+// };
 
-// 📌 Verify Payment After Completion
-module.exports.verifyPayment = async (req, res) => {
-  try {
-    const { order_id, payment_id, razorpay_signature } = req.body;
+// // 📌 Verify Payment After Completion
+// module.exports.verifyPayment = async (req, res) => {
+//   try {
+//     const { order_id, payment_id, razorpay_signature } = req.body;
 
-    // Verify Razorpay Signature
-    const body = order_id + "|" + payment_id;
-    const expectedSignature = crypto
-      .createHmac("sha256", process.env.RAZORPAY_KEY_SECRET)
-      .update(body)
-      .digest("hex");
+//     // Verify Razorpay Signature
+//     const body = order_id + "|" + payment_id;
+//     const expectedSignature = crypto
+//       .createHmac("sha256", process.env.RAZORPAY_KEY_SECRET)
+//       .update(body)
+//       .digest("hex");
 
-    if (expectedSignature === razorpay_signature) {
-      await Payments.update(
-        { status: "success", payment_id },
-        { where: { order_id } }
-      );
-      return res.json({ success: true, message: "Payment verified" });
-    } else {
-      await Payments.update(
-        { status: "failed" },
-        { where: { order_id } }
-      );
-      return res.status(400).json({ error: "Invalid payment signature" });
-    }
-  } catch (error) {
-    console.error(error);
-    return res.status(500).json({ error: "Payment verification failed" });
-  }
-};
+//     if (expectedSignature === razorpay_signature) {
+//       await Payments.update(
+//         { status: "success", payment_id },
+//         { where: { order_id } }
+//       );
+//       return res.json({ success: true, message: "Payment verified" });
+//     } else {
+//       await Payments.update(
+//         { status: "failed" },
+//         { where: { order_id } }
+//       );
+//       return res.status(400).json({ error: "Invalid payment signature" });
+//     }
+//   } catch (error) {
+//     console.error(error);
+//     return res.status(500).json({ error: "Payment verification failed" });
+//   }
+// };
 
-// 📌 Razorpay Webhook for Auto-Tracking Payments
-module.exports.razorpayWebhook = async (req, res) => {
-  try {
-    const secret = process.env.RAZORPAY_KEY_SECRET;
-    const signature = req.headers["x-razorpay-signature"];
+// // 📌 Razorpay Webhook for Auto-Tracking Payments
+// module.exports.razorpayWebhook = async (req, res) => {
+//   try {
+//     const secret = process.env.RAZORPAY_KEY_SECRET;
+//     const signature = req.headers["x-razorpay-signature"];
 
-    const body = JSON.stringify(req.body);
-    const expectedSignature = crypto.createHmac("sha256", secret).update(body).digest("hex");
+//     const body = JSON.stringify(req.body);
+//     const expectedSignature = crypto.createHmac("sha256", secret).update(body).digest("hex");
 
-    if (expectedSignature !== signature) {
-      return res.status(400).json({ error: "Invalid webhook signature" });
-    }
+//     if (expectedSignature !== signature) {
+//       return res.status(400).json({ error: "Invalid webhook signature" });
+//     }
 
-    const paymentStatus = req.body.event === "payment.captured" ? "success" : "failed";
-    const order_id = req.body.payload.payment.entity.order_id;
-    const payment_id = req.body.payload.payment.entity.id;
+//     const paymentStatus = req.body.event === "payment.captured" ? "success" : "failed";
+//     const order_id = req.body.payload.payment.entity.order_id;
+//     const payment_id = req.body.payload.payment.entity.id;
 
-    await Payments.update(
-      { status: paymentStatus, payment_id },
-      { where: { order_id } }
-    );
+//     await Payments.update(
+//       { status: paymentStatus, payment_id },
+//       { where: { order_id } }
+//     );
 
-    return res.json({ success: true, message: "Webhook processed successfully" });
-  } catch (error) {
-    console.error(error);
-    return res.status(500).json({ error: "Webhook processing failed" });
-  }
-};
+//     return res.json({ success: true, message: "Webhook processed successfully" });
+//   } catch (error) {
+//     console.error(error);
+//     return res.status(500).json({ error: "Webhook processing failed" });
+//   }
+// };
