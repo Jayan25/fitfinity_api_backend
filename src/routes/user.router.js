@@ -17,4 +17,9 @@ router.post("/dietPlan", authentication, userController.dietPlan);
 router.post("/helpAndSupport", authentication,validate(common.helpAndSuppoprt), commonController.helpAndSupport);
 router.get("/transaction", authentication,  userController.transaction);
 
+// payment gateway apis
+// router.post("/create-order",authentication, userController.createOrder);
+// router.post("/verify-payment", authentication, userController.verifyPayment);
+// router.post("/razorpay-webhook", userController.razorpayWebhook);
+
 module.exports = router;

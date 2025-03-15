@@ -206,21 +206,21 @@ module.exports.verifyTrainerKyc = async function (req, res) {
     {
       return ReE(res,"Trainer not found!",404);
     }
-  //    await Trainers.update(
-  //     { kyc_status: kyc_status },
-  //     { where: { id } }
-  //   );
+     await Trainers.update(
+      { kyc_status: kyc_status },
+      { where: { id } }
+    );
 
-  //   let where={
-  //     trainer_id:id
-  //   }
-  //  await TrainerDocument.update({
-  //     verfication_status:"success"
-  //   },
-  //   {
-  //     where
-  //   }
-  //   )
+    let where={
+      trainer_id:id
+    }
+   await TrainerDocument.update({
+      verfication_status:"success"
+    },
+    {
+      where
+    }
+    )
   let emailData = {
     email: trainerData.email,
     name:trainerData.name

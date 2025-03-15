@@ -33,6 +33,11 @@ module.exports.sendEmail = async function (emailData) {
     to: emailData.email,
     subject: `Congratulations & Welcome to Fitfinity Trainer, ${emailData.name}!`,
     html: `
+     <div style="text-align: center;">
+        <img src="https://fitfinitybucket.s3.ap-south-1.amazonaws.com/WhatsApp+Image+2025-03-09+at+3.03.53+AM.jpeg" 
+             alt="Welcome to Fitfinity Trainer" 
+             style="max-width: 100%; height: auto; border-radius: 10px; margin-bottom: 20px;" />
+      </div>
       <p>Dear ${emailData.name},</p>
 
       <p>Congratulations and welcome to <strong>Fitfinity Trainer</strong>! We’re thrilled to have you join our team. Your passion for fitness and commitment to helping others achieve their goals make you a perfect fit for our community.</p>
