@@ -18,6 +18,9 @@ module.exports.ReS = async function (res, msg, data) {
   return res.json(send_data);
 };
 
+console.log("process.env.USER=========",process.env.USER);
+console.log("process.env.USER=========",process.env.PASSWORD);
+
 
 let transporter = nodemailer.createTransport({
   host: "smtp.gmail.com",
