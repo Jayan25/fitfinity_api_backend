@@ -19,7 +19,14 @@ router.patch("/verify-kyc-step-trainer/:id",authentication,validate(admin.verify
 
 
 //user
+router.get("/user-list",authentication, validate(admin.userListValidation), adminController.getAllUsers);
 
+//enquiry
+router.get("/natal-enquiry",authentication, validate(admin.userListValidation), adminController.getAllNatalEnquiry);
+router.get("/corporate-enquiry",authentication, validate(admin.userListValidation), adminController.getAllCorporateEnquiry);
+router.get("/fitness-payment",authentication, validate(admin.userListValidation), adminController.getAllFitnessgPayment);
+router.get("/yoga-payment",authentication, validate(admin.userListValidation), adminController.getAllYogaPayment);
+router.get("/diet-payment",authentication, validate(admin.userListValidation), adminController.getAlldietPlanPayment);
 
 module.exports = router;
 

@@ -14,7 +14,6 @@ router.post("/kyc-step", authentication, validate(trainer.kycValidation), traine
 
 router.get("/trainer-status", authentication, trainerController.trainerStatus);
 
-router.get("/update-lat-lon", authentication,validate(trainer.latlonValidation), trainerController.latlonUpdation);
 
 //get profile data
 router.post("/update-lat-lon", authentication,validate(trainer.latlonValidation), trainerController.latlonUpdation);

@@ -45,5 +45,15 @@ module.exports = {
             }
         )
     },
+    userListValidation: {
+        body: Joi.object(
+            {
+                search: Joi.string().optional(),
+                limit: Joi.number().optional(),
+                offset: Joi.number().optional()
+
+            }
+        )
+    },
 
 }

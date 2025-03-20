@@ -1,5 +1,8 @@
 const nodemailer = require("nodemailer");
-const Trainers = require("../models/trainer.model");
+const {Users,Trainers} = require("../models/index");
+const dotenv = require("dotenv");
+dotenv.config();
+
 module.exports.ReE = async function (res, err, code) {
   if (typeof err == "object" && typeof err.message != "undefined") {
     err = err.message;
@@ -21,15 +24,15 @@ let transporter = nodemailer.createTransport({
   port: 465,
   secure: true,
   auth: {
-    user: "fitfinitytrainer@gmail.com",
-    pass: "hlon bqic fvxe erhd",
+    user: process.env.USER,
+    pass: process.env.PASSWORD,
   },
 });
 
 
 module.exports.sendEmail = async function (emailData) {
   const receiver = {
-    from: "fitfinitytrainer@gmail.com",
+    from: process.env.USER,
     to: emailData.email,
     subject: `Congratulations & Welcome to Fitfinity Trainer, ${emailData.name}!`,
     html: `
@@ -66,45 +69,132 @@ module.exports.sendEmail = async function (emailData) {
   });
 }
 
+async function sendTrainerNotificationEmail(emailData, user) {
+  const mailOptions = {
+    from: "fitfinitytrainer@gmail.com",
+    to: emailData.email,
+    subject: `A user is nearby — Secure your booking now!`,
+    html: `
+      <p>Dear ${emailData.name},</p>
+      <p>Exciting news! A user is currently near your location and may be looking to book a service.</p>
+
+      <p><strong>Details:</strong></p>
+      <ul>
+        <li>Name: ${user.name || 'N/A'}</li>
+        <li>Email: ${user.email || 'N/A'}</li>
+        <li>Location Coordinates: (${user.lat}, ${user.lon})</li>
+      </ul>
+
+      <p>We encourage you to check the Fitfinity Trainer app immediately and secure the booking opportunity before someone else does!</p>
+
+      <p>📲 Be proactive. Stay ahead. Grow your business with Fitfinity.</p>
+
+      <p>Best Regards,</p>
+      <p><strong>Team Fitfinity Trainer</strong></p>
+    `
+  };
+
+  
+  transporter.sendMail(mailOptions, (err, info) => {
+    if (err) {
+      console.error("Failed to send email to trainer:", err.message);
+    } else {
+      console.log(`Email sent to ${emailData.email}`);
+    }
+  });
+}
+
+module.exports.sendTrainerNotificationEmail = sendTrainerNotificationEmail;
+
+async function sendAdminNoTrainerFoundEmail(user) {
+  const mailOptions = {
+    from: "fitfinitytrainer@gmail.com",
+    to: "fitfinitytrainer@gmail.com", // Admin Email
+    subject: `🚨 No Trainers Found Nearby for User ID ${user.id}`,
+    html: `
+      <p>Dear Admin,</p>
+      <p>No trainers were found within ${RADIUS_KM} km radius for the following user:</p>
+      <ul>
+        <li>User ID: ${user.id}</li>
+        <li>Name: ${user.name || 'N/A'}</li>
+        <li>Email: ${user.email || 'N/A'}</li>
+        <li>Location Coordinates: (${user.lat}, ${user.lon})</li>
+      </ul>
+      <p>This might be a good opportunity to onboard more trainers in this area.</p>
+      <p>Thanks,<br/><strong>Fitfinity System</strong></p>
+    `
+  };
+
+  await transporter.sendMail(mailOptions);
+}
+
+
+const RADIUS_KM = process.env.RADIUS_KM;
+
+function calculateDistance(lat1, lon1, lat2, lon2) {
+  const radlat1 = Math.PI * lat1 / 180;
+  const radlat2 = Math.PI * lat2 / 180;
+  const theta = lon1 - lon2;
+  const radtheta = Math.PI * theta / 180;
+  let dist = Math.sin(radlat1) * Math.sin(radlat2) +
+             Math.cos(radlat1) * Math.cos(radlat2) * Math.cos(radtheta);
+  dist = Math.min(1, dist);
+  dist = Math.acos(dist);
+  dist = dist * 180 / Math.PI;
+  dist = dist * 60 * 1.1515;
+  return dist * 1.609344; // KM
+}
 
 module.exports.createAndSendEnquiry = async function (userDetail) {
   try {
 
-    let trainerList = await Trainers.find({
+    console.log("Trainers===",Trainers);
+    
+
+    const trainerList = await Trainers.findAll({
       where: {
         kyc_status: "done",
         block_status: "Unblocked",
+      },
+      attributes: ['id', 'email', 'name', 'lat', 'lon']
+    });
+
+    console.log("trainerList==============",trainerList.length);
+    
+    const nearbyTrainers = [];
+
+    console.log("RADIUS_KM====",RADIUS_KM);
+    
+
+    for (let trainer of trainerList) {
+      if (trainer.lat && trainer.lon && userDetail.lat && userDetail.lon) {
+        const distance = calculateDistance(userDetail.lat, userDetail.lon, trainer.lat, trainer.lon);
+        console.log("distane========",distance);
+        
+        if (distance <= RADIUS_KM) {
+          nearbyTrainers.push(trainer);
+        }
       }
-    })
-
-    for (let i = 0; i < trainerList.length; i++) {
-      let trainer = trainerList[i];
-      if (userDetail.lat == trainer.lat && userDetail.lon == trainer.lon) {
-        return resolve(0);
-      }
-
-      const radlat1 = (Math.PI * userDetail.lat) / 180;
-      const radlat2 = (Math.PI * instructor_lat) / 180;
-      const theta = userDetail.lon - trainer.lon;
-      const radtheta = (Math.PI * theta) / 180;
-
-      let dist = Math.sin(radlat1) * Math.sin(radlat2) + Math.cos(radlat1) * Math.cos(radlat2) * Math.cos(radtheta);
-
-      if (dist > 1) {
-        dist = 1;
-      }
-      dist = Math.acos(dist);
-      dist = (dist * 180) / Math.PI;
-      dist = dist * 60 * 1.1515;
-
-      // dist in KM
-      const final_dist = dist * 1.609344;
-
-      return parseFloat(distance).toFixed(2)
-
     }
-  } catch {
+
+    console.log("After for loooopppppppp",nearbyTrainers.length);
+    
+
+    if (nearbyTrainers.length === 0) {
+      await sendAdminNoTrainerFoundEmail(userDetail);
+    } else {
+      for (let trainer of nearbyTrainers) {
+        
+        await sendTrainerNotificationEmail({
+          email: trainer.email,
+          name: trainer.name
+        }, userDetail);
+      }
+    }
+
+  } catch (error) {
+    console.error("Error in createAndSendEnquiry:", error.message);
     throw new Error("Something went wrong while sending enquiry");
   }
+};
 
-}

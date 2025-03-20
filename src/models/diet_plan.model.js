@@ -73,15 +73,23 @@ module.exports = (sequelize, DataTypes) => {
       allowNull: false,
     },
     user_id: {
-        type: DataTypes.BIGINT,
-        allowNull: false,
-      }
+      type: DataTypes.BIGINT,
+      allowNull: false,
+    }
   }, {
     timestamps: true,
     createdAt: "created_at",
     updatedAt: "updated_at",
     tableName: "diet_plan",
   });
+
+  // 🔗 Association
+  diet_plan.associate = (models) => {
+    diet_plan.belongsTo(models.Users, {
+      foreignKey: "user_id",
+      as: "user",
+    });
+  };
 
   return diet_plan;
 };

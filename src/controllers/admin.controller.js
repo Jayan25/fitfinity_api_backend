@@ -1,4 +1,4 @@
-const { Trainers, Admins,TrainerDocument } = require("../models/index")
+const { Trainers, Admins,TrainerDocument,Users,enquiry,service_bookings,diet_plan } = require("../models/index")
 const { ReE, ReS,sendEmail } = require("../utils/util.service");
 const { generateToken } = require("../utils/jwtUtils");
 const { off } = require("../../app");
@@ -35,8 +35,8 @@ module.exports.getAllTrainers = async function (req, res) {
   try {
     let { limit, offset, search } = req.query;
 
-    limit = parseInt(limit) ?? 10;
-    offset = parseInt(offset) ?? 0;
+    limit = isNaN(Number(limit)) ? 10 : Number(limit);
+    offset = isNaN(Number(offset)) ? 0 : Number(offset);
 
     let where = search ? {
       name: {
@@ -60,7 +60,7 @@ module.exports.getAllTrainers = async function (req, res) {
     });
 
 
-    return ReS(res, "Trainers list fecthed", trainers)
+    return ReS(res, "Trainers list fetched", trainers)
 
   } catch (error) {
     console.error("Error fetching trainers:", error);
@@ -237,5 +237,189 @@ module.exports.verifyTrainerKyc = async function (req, res) {
 };
 
 
+
+
+module.exports.getAllUsers = async function (req, res) {
+  try {
+    let { limit, offset, search } = req.query;
+    
+    limit = isNaN(Number(limit)) ? 10 : Number(limit);
+    offset = isNaN(Number(offset)) ? 0 : Number(offset);
+    let where = search ? {
+      name: {
+        [Op.like]: `${search}%`,
+      },
+    } : {};
+
+    const userList = await Users.findAndCountAll({
+      where,
+      limit,
+      offset,
+      order: [['created_at', 'DESC']],
+      attributes: { exclude: ['password'] },
+      distinct: true,
+    });
+    return ReS(res, "User list fetched", userList)
+  } catch (error) {
+    console.error("Error fetching Users:", error);
+    return ReE(res, "An error occurred while fetching trainers", 500)
+  }
+};
+
+
+module.exports.getAllNatalEnquiry = async function (req, res) {
+  try {
+    let { limit, offset, search } = req.query;
+    
+    limit = isNaN(Number(limit)) ? 10 : Number(limit);
+    offset = isNaN(Number(offset)) ? 0 : Number(offset);
+    let where = search ? {
+      name: {
+        [Op.like]: `${search}%`,
+      },
+      enquiry_for:"natal"
+    } : {enquiry_for:"natal"};
+
+    const natalList = await enquiry.findAndCountAll({
+      where,
+      limit,
+      offset,
+      order: [['created_at', 'DESC']],
+      attributes:{exclude:["user_id"]}
+    });
+    return ReS(res, "Natal list fetched", natalList)
+
+  } catch (error) {
+    console.error("Error fetching Users:", error);
+    return ReE(res, "An error occurred while fetching natal enquiry", 500)
+  }
+};
+
+
+module.exports.getAllCorporateEnquiry = async function (req, res) {
+  try {
+    let { limit, offset, search } = req.query;
+    
+    limit = isNaN(Number(limit)) ? 10 : Number(limit);
+    offset = isNaN(Number(offset)) ? 0 : Number(offset);
+    let where = search ? {
+      name: {
+        [Op.like]: `${search}%`,
+      },
+      enquiry_for:"corporate"
+    } : {enquiry_for:"corporate"};
+
+    const corporateList = await enquiry.findAndCountAll({
+      where,
+      limit,
+      offset,
+      order: [['created_at', 'DESC']],
+      attributes:{exclude:["user_id"]}
+    });
+
+    return ReS(res, "Corporate list fetched", corporateList)
+
+  } catch (error) {
+    console.error("Error fetching Users:", error);
+    return ReE(res, "An error occurred while fetching Corporate enquiry", 500)
+  }
+};
+module.exports.getAllFitnessgPayment = async function (req, res) {
+  try {
+    let { limit, offset, search } = req.query;
+    
+    limit = isNaN(Number(limit)) ? 10 : Number(limit);
+    offset = isNaN(Number(offset)) ? 0 : Number(offset);
+    let where = search ? {
+      name: {
+        [Op.like]: `${search}%`,
+      },
+      service_type:"fitness"
+    } : {  service_type:"fitness"};
+
+    const serviceBookingList = await service_bookings.findAndCountAll({
+      where,
+      limit,
+      offset,
+      order: [['created_at', 'DESC']],
+      include: [
+        {
+          model: Users,
+          as: "user",
+          attributes: ['id', 'name', 'email',"mobile","address"] // Add any fields you want from the Users table
+        }
+      ],
+    });
+    return ReS(res, "Fitness Payment feteched", serviceBookingList)
+  } catch (error) {
+    console.error("Error fetching Users:", error);
+    return ReE(res, "An error occurred while fetching Fitness Payment", 500)
+  }
+};
+module.exports.getAllYogaPayment = async function (req, res) {
+  try {
+    let { limit, offset, search } = req.query;
+    limit = isNaN(Number(limit)) ? 10 : Number(limit);
+    offset = isNaN(Number(offset)) ? 0 : Number(offset);
+    let where = search ? {
+      name: {
+        [Op.like]: `${search}%`,
+      },
+      service_type:"yoga"
+    } : {  service_type:"yoga"};
+
+    const serviceBookingList = await service_bookings.findAndCountAll({
+      where,
+      limit,
+      offset,
+      order: [['created_at', 'DESC']],
+      include: [
+        {
+          model: Users,
+          as: "user",
+          attributes: ['id', 'name', 'email',"mobile","address"] // Add any fields you want from the Users table
+        }
+      ],
+    });
+    return ReS(res, "Yoga Payment feteched", serviceBookingList)
+
+  } catch (error) {
+    console.error("Error fetching Users:", error);
+    return ReE(res, "An error occurred while fetching Yoga Payment", 500)
+  }
+};
+
+module.exports.getAlldietPlanPayment = async function (req, res) {
+  try {
+    let { limit, offset, search } = req.query;
+    limit = isNaN(Number(limit)) ? 10 : Number(limit);
+    offset = isNaN(Number(offset)) ? 0 : Number(offset);
+    let where = search ? {
+      name: {
+        [Op.like]: `${search}%`,
+      },
+    } : { };
+
+    const serviceBookingList = await diet_plan.findAndCountAll({
+      where,
+      limit,
+      offset,
+      order: [['created_at', 'DESC']],
+      include: [
+        {
+          model: Users,
+          as: "user",
+          attributes: ['id', 'name', 'email',"mobile","address"] // Add any fields you want from the Users table
+        }
+      ],
+    });
+
+    return ReS(res, "Diet Payment feteched", serviceBookingList)
+
+  } catch (error) {
+    console.error("Error fetching Users:", error);
+    return ReE(res, "An error occurred while fetching Diet Payment", 500)
+  }
+};
 
 

@@ -2,10 +2,10 @@ const { Trainers, Users, service_bookings,enquiry,diet_plan,Payment } = require(
 const { ReE, ReS, createAndSendEnquiry } = require("../utils/util.service");
 const jwt = require("jsonwebtoken");
 const { generateToken } = require("../utils/jwtUtils");
-// const Razorpay = require("razorpay");
-// const crypto = require("crypto");
-// const dotenv = require("dotenv");
-// dotenv.config();
+const Razorpay = require("razorpay");
+const crypto = require("crypto");
+const dotenv = require("dotenv");
+dotenv.config();
 
 module.exports.SignUp = async function (req, res) {
   try {
@@ -108,6 +108,19 @@ module.exports.createOrUpdateServiceBooking = async (req, res) => {
       training_needed_for: req.body.training_needed_for,
     });
 
+    //1. After this write the payment code.
+    //2. Take the above service id and update it with latest payment table entry.
+
+    let userDetail=await Users.findOne({
+      where:{
+        id:user_id
+      },
+      attributes: ['id', 'email', 'name', 'lat', 'lon']
+    });
+
+    console.log("userDetail=============",userDetail);
+// code to send email to all the matched trainer in 10 KM radius
+    // await createAndSendEnquiry(userDetail)
     return res.status(200).json({
       message: `Booking data updated successfully`,
     });
@@ -145,24 +158,13 @@ module.exports.latlonUpdation = async function (req, res) {
 };
 module.exports.natalEnquiry = async function (req, res) {
   try {
-    const { id } = req.user;
-    let userDetail = await Users.findOne({
-      where: {
-        id: id,
-      },
-    });
-
-    if (!userDetail) {
-      return ReE(res, "User not found!", 400);
-    }
-console.log("Enquiry=======",enquiry)
     let dataData = {
       name:  req.body.name,
       email:  req.body.email,
       address:  req.body.address,
       phone:  req.body.phone,
       requirement:  req.body.requirement,
-      user_id:id,
+      user_id:1,
       enquiry_for:"natal"
     };
     let a=await enquiry.create(dataData);
@@ -176,18 +178,7 @@ console.log("a=================================================",a);
 };
 module.exports.corporatePlan = async function (req, res) {
   try {
-    const { id } = req.user;
-    let userDetail = await Users.findOne({
-      where: {
-        id: id,
-      },
-    });
-
-    if (!userDetail) {
-      return ReE(res, "User not found!", 400);
-    }
-    console.log("Enquiry=======",enquiry,id)
-
+  
 
     let dataData = {
       name:  req.body.name,
@@ -195,7 +186,7 @@ module.exports.corporatePlan = async function (req, res) {
       company_name:  req.body.company_name,
       phone:  req.body.phone,
       requirement:  req.body.requirement,
-      user_id:id,
+      user_id:1,
       enquiry_for:"corporate"
 
     };
@@ -212,11 +203,10 @@ module.exports.corporatePlan = async function (req, res) {
 
 module.exports.dietPlan = async (req, res) => {
   try {
-    console.log("============================", diet_plan);
     const user_id = req.user.id;
-    console.log("ServiceBooking================", diet_plan);
 
-    
+    // "type": "weight and muscle gain", //[ "weight and muscle gain","weight and fat loss","thyroid and diabetic","meal plan"]
+
 
     await diet_plan.create(
       {
@@ -263,110 +253,108 @@ module.exports.transaction = async (req, res) => {
 
 
 
-// const razorpay = new Razorpay({
-//   key_id: process.env.RAZORPAY_KEY_ID,
-//   key_secret: process.env.RAZORPAY_KEY_SECRET,
-// });
+const razorpay = new Razorpay({
+  key_id: process.env.RAZORPAY_KEY_ID,
+  key_secret: process.env.RAZORPAY_KEY_SECRET,
+});
 
-// const SERVICE_PRICES = {
-//   "fitness_trainer": 5000,
-//   "yoga_trainer": 4000,
-//   "weight_loss_trainer": 6000,
-//   "kickboxing_trainer": 4500,
-//   "mma_trainer": 7000,
-//   "cardio_trainer": 5500,
-// };
+const SERVICE_PRICES = {
+  "fitness_trainer": 5000,
+  "yoga_trainer": 4000,
+  "weight_loss_trainer": 6000,
+  "kickboxing_trainer": 4500,
+  "mma_trainer": 7000,
+  "cardio_trainer": 5500,
+};
 
-// module.exports.createOrder = async (req, res) => {
-//   try {
-//     const { service_type } = req.body;
-//     if (!SERVICE_PRICES[service_type]) {
-//       return res.status(400).json({ error: "Invalid service type" });
-//     }
+module.exports.createOrder = async (req, res) => {
+  try {
+    const { service_type } = req.body;
+    if (!SERVICE_PRICES[service_type]) {
+      return res.status(400).json({ error: "Invalid service type" });
+    }
 
-//     const amount = SERVICE_PRICES[service_type] * 100; // Convert to paise
-//     const order = await razorpay.orders.create({
-//       amount,
-//       currency: "INR",
-//       receipt: `receipt_${Date.now()}`,
-//       payment_capture: 1, // Auto capture payment
-//     });
-//     console.log("order===========",order)
-//     console.log("Payments===========",Payment)
+    const amount = SERVICE_PRICES[service_type] * 100;
+    const order = await razorpay.orders.create({
+      amount,
+      currency: "INR",
+      receipt: `receipt_${Date.now()}`,
+      payment_capture: 1,
+    });
 
-//     // Store order in DB
-//     await Payment.create({
-//       user_id: req.user.id,
-//       service_type,
-//       order_id: order.id,
-//       trainer_id:123,
-//       amount,
-//       status: "pending",
-//     });
+    // Store order in DB
+    await Payment.create({
+      user_id: req.user.id,
+      service_type,
+      order_id: order.id,
+      trainer_id:123,
+      amount,
+      status: "pending",
+    });
 
-//     return res.json({ success: true, order_id: order.id, amount });
-//   } catch (error) {
-//     console.error(error);
-//     return res.status(500).json({ error: "Failed to create order" });
-//   }
-// };
+    return res.json({ success: true, order_id: order.id, amount });
+  } catch (error) {
+    console.error(error);
+    return res.status(500).json({ error: "Failed to create order" });
+  }
+};
 
-// // 📌 Verify Payment After Completion
-// module.exports.verifyPayment = async (req, res) => {
-//   try {
-//     const { order_id, payment_id, razorpay_signature } = req.body;
+// 📌 Verify Payment After Completion
+module.exports.verifyPayment = async (req, res) => {
+  try {
+    const { order_id, payment_id, razorpay_signature } = req.body;
 
-//     // Verify Razorpay Signature
-//     const body = order_id + "|" + payment_id;
-//     const expectedSignature = crypto
-//       .createHmac("sha256", process.env.RAZORPAY_KEY_SECRET)
-//       .update(body)
-//       .digest("hex");
+    // Verify Razorpay Signature
+    const body = order_id + "|" + payment_id;
+    const expectedSignature = crypto
+      .createHmac("sha256", process.env.RAZORPAY_KEY_SECRET)
+      .update(body)
+      .digest("hex");
 
-//     if (expectedSignature === razorpay_signature) {
-//       await Payments.update(
-//         { status: "success", payment_id },
-//         { where: { order_id } }
-//       );
-//       return res.json({ success: true, message: "Payment verified" });
-//     } else {
-//       await Payments.update(
-//         { status: "failed" },
-//         { where: { order_id } }
-//       );
-//       return res.status(400).json({ error: "Invalid payment signature" });
-//     }
-//   } catch (error) {
-//     console.error(error);
-//     return res.status(500).json({ error: "Payment verification failed" });
-//   }
-// };
+    if (expectedSignature === razorpay_signature) {
+      await Payment.update(
+        { status: "success", payment_id },
+        { where: { order_id } }
+      );
+      return res.json({ success: true, message: "Payment verified" });
+    } else {
+      await Payment.update(
+        { status: "failed" },
+        { where: { order_id } }
+      );
+      return res.status(400).json({ error: "Invalid payment signature" });
+    }
+  } catch (error) {
+    console.error(error);
+    return res.status(500).json({ error: "Payment verification failed" });
+  }
+};
 
-// // 📌 Razorpay Webhook for Auto-Tracking Payments
-// module.exports.razorpayWebhook = async (req, res) => {
-//   try {
-//     const secret = process.env.RAZORPAY_KEY_SECRET;
-//     const signature = req.headers["x-razorpay-signature"];
+// 📌 Razorpay Webhook for Auto-Tracking Payments
+module.exports.razorpayWebhook = async (req, res) => {
+  try {
+    const secret = process.env.RAZORPAY_KEY_SECRET;
+    const signature = req.headers["x-razorpay-signature"];
 
-//     const body = JSON.stringify(req.body);
-//     const expectedSignature = crypto.createHmac("sha256", secret).update(body).digest("hex");
+    const body = JSON.stringify(req.body);
+    const expectedSignature = crypto.createHmac("sha256", secret).update(body).digest("hex");
 
-//     if (expectedSignature !== signature) {
-//       return res.status(400).json({ error: "Invalid webhook signature" });
-//     }
+    if (expectedSignature !== signature) {
+      return res.status(400).json({ error: "Invalid webhook signature" });
+    }
 
-//     const paymentStatus = req.body.event === "payment.captured" ? "success" : "failed";
-//     const order_id = req.body.payload.payment.entity.order_id;
-//     const payment_id = req.body.payload.payment.entity.id;
+    const paymentStatus = req.body.event === "payment.captured" ? "success" : "failed";
+    const order_id = req.body.payload.payment.entity.order_id;
+    const payment_id = req.body.payload.payment.entity.id;
 
-//     await Payments.update(
-//       { status: paymentStatus, payment_id },
-//       { where: { order_id } }
-//     );
+    await Payments.update(
+      { status: paymentStatus, payment_id },
+      { where: { order_id } }
+    );
 
-//     return res.json({ success: true, message: "Webhook processed successfully" });
-//   } catch (error) {
-//     console.error(error);
-//     return res.status(500).json({ error: "Webhook processing failed" });
-//   }
-// };
+    return res.json({ success: true, message: "Webhook processed successfully" });
+  } catch (error) {
+    console.error(error);
+    return res.status(500).json({ error: "Webhook processing failed" });
+  }
+};
