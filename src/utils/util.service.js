@@ -18,7 +18,7 @@ module.exports.ReS = async function (res, msg, data) {
   return res.json(send_data);
 };
 
-console.log("process.env.USER=========",process.env.USER);
+console.log("process.env.USER=========",process.env.EMAIL);
 console.log("process.env.USER=========",process.env.PASSWORD);
 
 
@@ -27,7 +27,7 @@ let transporter = nodemailer.createTransport({
   port: 465,
   secure: true,
   auth: {
-    user: process.env.USER,
+    user: process.env.EMAIL,
     pass: process.env.PASSWORD,
   },
 });
@@ -35,7 +35,7 @@ let transporter = nodemailer.createTransport({
 
 module.exports.sendEmail = async function (emailData) {
   const receiver = {
-    from: process.env.USER,
+    from: process.env.EMAIL,
     to: emailData.email,
     subject: `Congratulations & Welcome to Fitfinity Trainer, ${emailData.name}!`,
     html: `
@@ -74,7 +74,7 @@ module.exports.sendEmail = async function (emailData) {
 
 async function sendTrainerNotificationEmail(emailData, user) {
   const mailOptions = {
-    from: "fitfinitytrainer@gmail.com",
+    from: process.env.EMAIL,
     to: emailData.email,
     subject: `A user is nearby — Secure your booking now!`,
     html: `
@@ -111,8 +111,8 @@ module.exports.sendTrainerNotificationEmail = sendTrainerNotificationEmail;
 
 async function sendAdminNoTrainerFoundEmail(user) {
   const mailOptions = {
-    from: "fitfinitytrainer@gmail.com",
-    to: "fitfinitytrainer@gmail.com", // Admin Email
+    from: process.env.EMAIL,
+    to: process.env.EMAIL, // Admin Email
     subject: `🚨 No Trainers Found Nearby for User ID ${user.id}`,
     html: `
       <p>Dear Admin,</p>
