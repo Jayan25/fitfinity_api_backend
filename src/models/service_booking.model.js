@@ -116,6 +116,12 @@ module.exports = (sequelize, DataTypes) => {
       as: "trainer",
       constraints: false, // Prevents enforcing foreign key at the DB level
     });
+
+    service_bookings.hasMany(models.Payment, {
+      foreignKey: "service_booking_id",
+      as: "payments",
+    });
+    
   };
 
   return service_bookings;

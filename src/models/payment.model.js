@@ -29,6 +29,17 @@ module.exports = (sequelize) => {
         type: DataTypes.STRING,
         allowNull: false,
       },
+      // Add this inside the Payment model fields
+      service_booking_id: {
+        type: DataTypes.BIGINT,
+        allowNull: true,
+      },
+
+      diet_plan_id: {
+        type: DataTypes.BIGINT,
+        allowNull: true,
+      },
+
       status: {
         type: DataTypes.STRING,
         allowNull: false,
@@ -36,7 +47,7 @@ module.exports = (sequelize) => {
       },
     },
     {
-      timestamps: true, 
+      timestamps: true,
       createdAt: "created_at",
       updatedAt: "updated_at",
       tableName: "payments",
@@ -48,11 +59,21 @@ module.exports = (sequelize) => {
       foreignKey: "user_id",
       as: "user",
     });
-    
+
     Payment.belongsTo(models.Trainers, {
       foreignKey: "trainer_id",
       as: "trainer",
     });
+
+    Payment.belongsTo(models.service_bookings, {
+      foreignKey: "service_booking_id",
+      as: "service_booking",
+    });
+    Payment.belongsTo(models.diet_plan, {
+      foreignKey: "diet_plan_id",
+      as: "diet_plan",
+    });
+    
   };
 
   return Payment;

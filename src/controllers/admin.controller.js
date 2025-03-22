@@ -1,4 +1,4 @@
-const { Trainers, Admins,TrainerDocument,Users,enquiry,service_bookings,diet_plan } = require("../models/index")
+const { Trainers, Admins,TrainerDocument,Users,enquiry,service_bookings,diet_plan,Payment } = require("../models/index")
 const { ReE, ReS,sendEmail } = require("../utils/util.service");
 const { generateToken } = require("../utils/jwtUtils");
 const { off } = require("../../app");
@@ -327,65 +327,135 @@ module.exports.getAllCorporateEnquiry = async function (req, res) {
 module.exports.getAllFitnessgPayment = async function (req, res) {
   try {
     let { limit, offset, search } = req.query;
-    
+
     limit = isNaN(Number(limit)) ? 10 : Number(limit);
     offset = isNaN(Number(offset)) ? 0 : Number(offset);
-    let where = search ? {
-      name: {
-        [Op.like]: `${search}%`,
-      },
-      service_type:"fitness"
-    } : {  service_type:"fitness"};
+    const userFilter = search
+    ? {
+        name: {
+          [Op.like]: `${search}%`,
+        },
+      }
+    : {};
 
-    const serviceBookingList = await service_bookings.findAndCountAll({
-      where,
-      limit,
-      offset,
-      order: [['created_at', 'DESC']],
+    const payments = await Payment.findAndCountAll({
       include: [
         {
-          model: Users,
-          as: "user",
-          attributes: ['id', 'name', 'email',"mobile","address"] // Add any fields you want from the Users table
-        }
+          model: service_bookings,
+          as: "service_booking",
+          required: true,
+          where: {
+            service_type: "fitness",
+          },
+          attributes: [
+            "id",
+            "booking_name",
+            "preferred_time_to_be_served",
+            "training_for",
+            "trial_date",
+            "trial_time",
+            "trainer_type",
+            "training_needed_for",
+            "payment_status",
+            "service_booking_step",
+            "created_at"
+          ],
+          include: [
+            {
+              model: Users,
+              where: userFilter, 
+              as: "user",
+              attributes: ["id", "name", "email", "mobile", "address"],
+              required: true,
+            },
+          ],
+        },
       ],
+      attributes: [
+        "id",
+        "order_id",
+        "payment_id",
+        "amount",
+        "status",
+        "created_at",
+      ],
+      order: [["created_at", "DESC"]],
+      limit,
+      offset,
     });
-    return ReS(res, "Fitness Payment feteched", serviceBookingList)
+
+    return ReS(res, "Fitness Payments fetched", payments);
   } catch (error) {
-    console.error("Error fetching Users:", error);
-    return ReE(res, "An error occurred while fetching Fitness Payment", 500)
+    console.error("Error fetching Fitness Payments:", error);
+    return ReE(res, "An error occurred while fetching Fitness Payments", 500);
   }
 };
+
 module.exports.getAllYogaPayment = async function (req, res) {
   try {
     let { limit, offset, search } = req.query;
-    limit = isNaN(Number(limit)) ? 10 : Number(limit);
+    limit = isNaN(Number(limit)) ? 10 : Number(limit); // ✅ fix here
     offset = isNaN(Number(offset)) ? 0 : Number(offset);
-    let where = search ? {
-      name: {
-        [Op.like]: `${search}%`,
-      },
-      service_type:"yoga"
-    } : {  service_type:"yoga"};
 
-    const serviceBookingList = await service_bookings.findAndCountAll({
-      where,
-      limit,
-      offset,
-      order: [['created_at', 'DESC']],
+    // Search filter by user name
+    const userFilter = search
+      ? {
+          name: {
+            [Op.like]: `${search}%`,
+          },
+        }
+      : {};
+
+    const payments = await Payment.findAndCountAll({
       include: [
         {
-          model: Users,
-          as: "user",
-          attributes: ['id', 'name', 'email',"mobile","address"] // Add any fields you want from the Users table
-        }
+          model: service_bookings,
+          as: "service_booking",
+          required: true,
+          where: {
+            service_type: "yoga",
+          },
+          attributes: [
+            "id",
+            "booking_name",
+            "preferred_time_to_be_served",
+            "training_for",
+            "trial_date",
+            "trial_time",
+            "trainer_type",
+            "training_needed_for",
+            "payment_status",
+            "service_booking_step",
+            "created_at"
+          ],
+          include: [
+            {
+              model: Users,
+              as: "user",
+              attributes: ["id", "name", "email", "mobile", "address"],
+              where: userFilter,
+              required: !!search, // ✅ Optional filter: only required true if search is given
+            },
+          ],
+        },
       ],
+      attributes: [
+        "id",
+        "order_id",
+        "payment_id",
+        "amount",
+        "status",
+        "created_at"
+      ],
+      order: [["created_at", "DESC"]],
+      limit,
+      offset,
     });
-    return ReS(res, "Yoga Payment feteched", serviceBookingList)
 
+    return ReS(res, "Yoga Payments fetched", payments);
   } catch (error) {
-    console.error("Error fetching Users:", error);
-    return ReE(res, "An error occurred while fetching Yoga Payment", 500)
+    console.error("Error fetching Yoga Payments:", error);
+    return ReE(res, "An error occurred while fetching Yoga Payments", 500);
   }
 };
 

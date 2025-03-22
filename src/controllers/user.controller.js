@@ -115,7 +115,7 @@ module.exports.createOrUpdateServiceBooking = async (req, res) => {
 
     //1. After this write the payment code.
     //2. Take the above service id and update it with latest payment table entry.
-   let paymentResponse= await createOrder(req.body.service_type,user_id,0,"trainer")
+   let paymentResponse= await createOrder(req.body.service_type,user_id,0,"trainer",serviceBookingsData.id)
    
     let userDetail=await Users.findOne({
       where:{
@@ -214,7 +214,7 @@ module.exports.dietPlan = async (req, res) => {
     // "type": "weight and muscle gain", //[ "weight and muscle gain","weight and fat loss","thyroid and diabetic","meal plan"]
 
 
-    await diet_plan.create(
+    let diet_pan_detail=await diet_plan.create(
       {
         user_id,
         type:req.body.type,
@@ -234,7 +234,7 @@ module.exports.dietPlan = async (req, res) => {
         final_price: req.body.final_price
     })
 
-    let paymentResponse= await createOrder(req.body.type,user_id,req.body.price,"diet")
+    let paymentResponse= await createOrder(req.body.type,user_id,req.body.price,"diet",diet_pan_detail.id)
 
     return res.status(200).json({
       message: `Diet plan updated successfully`,
@@ -246,19 +246,54 @@ module.exports.dietPlan = async (req, res) => {
   }
 };
 
-module.exports.transaction = async (req, res) => {
+module.exports.transaction = async function (req, res) {
   try {
+    let { limit, offset, search } = req.query;
 
-    
-    // let data = await Payment.find({})
+    limit = isNaN(Number(limit)) ? 10 : Number(limit);
+    offset = isNaN(Number(offset)) ? 0 : Number(offset);
 
-    return ReS(res,"Transaction Fetched success!",response={
-      count:0,
-      data:[]
-    })
+    const payments = await Payment.findAndCountAll({
+      include: [
+        {
+          model: service_bookings,
+          as: "service_booking",
+          required: true,
+          where: {
+            user_id:req.user.id
+          },
+          attributes: [
+            "id",
+            "booking_name",
+            "preferred_time_to_be_served",
+            "training_for",
+            "trial_date",
+            "trial_time",
+            "trainer_type",
+            "training_needed_for",
+            "payment_status",
+            "service_booking_step",
+            "created_at"
+          ],
+        },
+      ],
+      attributes: [
+        "id",
+        "order_id",
+        "payment_id",
+        "amount",
+        "status",
+        "created_at",
+      ],
+      order: [["created_at", "DESC"]],
+      limit,
+      offset,
+    });
+
+    return ReS(res, "Fitness Payments fetched", payments);
   } catch (error) {
-    console.error("Service Booking Error:", error);
-    return res.status(500).json({ message: "Internal Server Error", error });
+    console.error("Error fetching Fitness Payments:", error);
+    return ReE(res, "An error occurred while fetching Fitness Payments", 500);
   }
 };
 
@@ -278,16 +313,20 @@ const SERVICE_PRICES = {
   "cardio_trainer": 5500,
 };
 
-const createOrder = async (service_type,user_id,price,from) => {
+const createOrder = async (service_type,user_id,price,from,id) => {
   try {
-    console.log("service_type,user_id,price,from======",service_type,user_id,price,from);
     let amount=price;
+    let service_booking_id
+    let diet_plan_id
     if(from==="trainer")
     {
       if (!SERVICE_PRICES[service_type]) {
         throw new Error("Invalid service type")
       }
       amount = SERVICE_PRICES[service_type] * 100;
+      service_booking_id=id
+    }else{
+      diet_plan_id=id
     }
 
     const order = await razorpay.orders.create({
@@ -302,14 +341,16 @@ const createOrder = async (service_type,user_id,price,from) => {
     });
 
     // Store order in DB
-    await Payment.create({
+    let paymanredata=await Payment.create({
       user_id: user_id,
       service_type,
       order_id: order.id,
       trainer_id:123,
       amount,
       status: "pending",
-    });
+      service_booking_id,
+      diet_plan_id
+    });    
 
     let data={
       amount,
