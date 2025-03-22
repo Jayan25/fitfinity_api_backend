@@ -10,6 +10,7 @@ dotenv.config();
 module.exports.SignUp = async function (req, res) {
   try {
     const { fullname, email, mobile, password } = req.body;
+    // send user detail like singin
     // const otp = Math.floor(1000 + Math.random() * 9000);
 
     // Create a new trainer instance using Sequelize
@@ -92,7 +93,7 @@ module.exports.createOrUpdateServiceBooking = async (req, res) => {
         .json({ message: "Step 1 must be completed first." });
     }
 
-    await service_bookings.create({
+    let serviceBookingsData= await service_bookings.create({
       user_id,
       service_type: req.body.service_type,
       booking_name: req.body.booking_name,
@@ -110,7 +111,8 @@ module.exports.createOrUpdateServiceBooking = async (req, res) => {
 
     //1. After this write the payment code.
     //2. Take the above service id and update it with latest payment table entry.
-
+   let paymentResponse= await createOrder(req.body.service_type,user_id)
+   
     let userDetail=await Users.findOne({
       where:{
         id:user_id
@@ -118,11 +120,11 @@ module.exports.createOrUpdateServiceBooking = async (req, res) => {
       attributes: ['id', 'email', 'name', 'lat', 'lon']
     });
 
-    console.log("userDetail=============",userDetail);
 // code to send email to all the matched trainer in 10 KM radius
     // await createAndSendEnquiry(userDetail)
     return res.status(200).json({
       message: `Booking data updated successfully`,
+      response:{...serviceBookingsData,paymentResponse}
     });
   } catch (error) {
     console.error("Service Booking Error:", error);
@@ -239,7 +241,9 @@ module.exports.dietPlan = async (req, res) => {
 
 module.exports.transaction = async (req, res) => {
   try {
+
     
+    // let data = await Payment.find({})
 
     return ReS(res,"Transaction Fetched success!",response={
       count:0,
@@ -259,19 +263,18 @@ const razorpay = new Razorpay({
 });
 
 const SERVICE_PRICES = {
-  "fitness_trainer": 5000,
-  "yoga_trainer": 4000,
+  "fitness": 99,
+  "yoga": 99,
   "weight_loss_trainer": 6000,
   "kickboxing_trainer": 4500,
   "mma_trainer": 7000,
   "cardio_trainer": 5500,
 };
 
-module.exports.createOrder = async (req, res) => {
+const createOrder = async (service_type,user_id) => {
   try {
-    const { service_type } = req.body;
     if (!SERVICE_PRICES[service_type]) {
-      return res.status(400).json({ error: "Invalid service type" });
+      throw new Error("Invalid service type")
     }
 
     const amount = SERVICE_PRICES[service_type] * 100;
@@ -280,11 +283,15 @@ module.exports.createOrder = async (req, res) => {
       currency: "INR",
       receipt: `receipt_${Date.now()}`,
       payment_capture: 1,
+      notes: {
+        key1: "value3",
+        key2: "value2"
+    }
     });
 
     // Store order in DB
     await Payment.create({
-      user_id: req.user.id,
+      user_id: user_id,
       service_type,
       order_id: order.id,
       trainer_id:123,
@@ -292,10 +299,14 @@ module.exports.createOrder = async (req, res) => {
       status: "pending",
     });
 
-    return res.json({ success: true, order_id: order.id, amount });
+    let data={
+      amount,
+      order_id:order.id
+    }
+    return data
   } catch (error) {
     console.error(error);
-    return res.status(500).json({ error: "Failed to create order" });
+    throw new Error("Payment Failed!")
   }
 };
 
@@ -330,31 +341,28 @@ module.exports.verifyPayment = async (req, res) => {
   }
 };
 
-// 📌 Razorpay Webhook for Auto-Tracking Payments
 module.exports.razorpayWebhook = async (req, res) => {
   try {
-    const secret = process.env.RAZORPAY_KEY_SECRET;
     const signature = req.headers["x-razorpay-signature"];
-
     const body = JSON.stringify(req.body);
-    const expectedSignature = crypto.createHmac("sha256", secret).update(body).digest("hex");
+    const expectedSignature = crypto
+      .createHmac("sha256", "xrazorpaysignature")
+      .update(body)
+      .digest("hex");
 
-    if (expectedSignature !== signature) {
-      return res.status(400).json({ error: "Invalid webhook signature" });
+    if (signature === expectedSignature) {
+      console.log(" Webhook Signature Verified");
+      console.log(" Event Data:", req.body);
+      console.log(" Event Data:", req.body.payload);
+      console.log(" Event Data:", req.body.payload.payment.entity.notes);
+
+      return res.status(200).json({ success: true, message: "Webhook verified and processed" });
+    } else {
+      console.log(" Signature mismatch");
+      return res.status(400).json({ success: false, message: "Invalid signature" });
     }
-
-    const paymentStatus = req.body.event === "payment.captured" ? "success" : "failed";
-    const order_id = req.body.payload.payment.entity.order_id;
-    const payment_id = req.body.payload.payment.entity.id;
-
-    await Payments.update(
-      { status: paymentStatus, payment_id },
-      { where: { order_id } }
-    );
-
-    return res.json({ success: true, message: "Webhook processed successfully" });
-  } catch (error) {
-    console.error(error);
-    return res.status(500).json({ error: "Webhook processing failed" });
+  } catch (err) {
+    console.error("Webhook processing error:", err);
+    return res.status(500).json({ success: false, message: "Server error" });
   }
 };

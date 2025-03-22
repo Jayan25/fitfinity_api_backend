@@ -15,11 +15,11 @@ router.post("/update-lat-lon", authentication,validate(user.latlonValidation), u
 router.post("/natalEnquiry",  userController.natalEnquiry);
 router.post("/corporatePlan",  userController.corporatePlan);
 router.post("/helpAndSupport", authentication,validate(common.helpAndSuppoprt), commonController.helpAndSupport);
-router.get("/transaction", authentication,  userController.transaction);
+router.get("/user-transaction", authentication,  userController.transaction);
 
 // payment gateway apis
 // router.post("/create-order",authentication, userController.createOrder);
-// router.post("/verify-payment", authentication, userController.verifyPayment);
-// router.post("/razorpay-webhook", userController.razorpayWebhook);
+router.post("/verify-payment", authentication, userController.verifyPayment);
+router.post("/razorpay-webhook", userController.razorpayWebhook);
 
 module.exports = router;
