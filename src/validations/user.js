@@ -34,10 +34,7 @@ module.exports = {
             }),
             preferred_time_to_be_served: Joi.when("service_booking_step", {
                 is: 1,
-                then: Joi.string().regex(/^([01]\d|2[0-3]):([0-5]\d)$/).required().messages({
-                    "string.pattern.base": "preferred_time_to_be_served must be in HH:MM format",
-                }),
-                otherwise: Joi.forbidden(),
+                then:Joi.string().required(),
             }),
             training_for: Joi.when("service_booking_step", {
                 is: 1,
@@ -51,10 +48,7 @@ module.exports = {
             }),
             trial_time: Joi.when("service_booking_step", {
                 is: 1,
-                then: Joi.string().regex(/^([01]\d|2[0-3]):([0-5]\d)$/).required().messages({
-                    "string.pattern.base": "trial_time must be in HH:MM format",
-                }),
-                otherwise: Joi.forbidden(),
+                then:Joi.string().required(),
             }),
           
            

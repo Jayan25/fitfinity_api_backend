@@ -24,6 +24,10 @@ module.exports.SignUp = async function (req, res) {
       // email_verified_at:new Date(),
     });
 
+    const users = await Users.findOne({ where: { email } });
+    let user = JSON.parse(JSON.stringify(users));
+    delete user.password;
+
     // let userData={
     //   name,
     //   lat,
@@ -38,7 +42,7 @@ module.exports.SignUp = async function (req, res) {
       { expiresIn: "30d" }
     );
 
-    return ReS(res, "Registration successful! OTP sent to your email.", token);
+    return ReS(res, "Registration successful! OTP sent to your email.",{users, token});
   } catch (error) {
     console.error(error);
     return ReE(res, "Error during registration. Please try again.");
@@ -111,7 +115,7 @@ module.exports.createOrUpdateServiceBooking = async (req, res) => {
 
     //1. After this write the payment code.
     //2. Take the above service id and update it with latest payment table entry.
-   let paymentResponse= await createOrder(req.body.service_type,user_id)
+   let paymentResponse= await createOrder(req.body.service_type,user_id,0,"trainer")
    
     let userDetail=await Users.findOne({
       where:{
@@ -230,8 +234,11 @@ module.exports.dietPlan = async (req, res) => {
         final_price: req.body.final_price
     })
 
+    let paymentResponse= await createOrder(req.body.type,user_id,req.body.price,"diet")
+
     return res.status(200).json({
       message: `Diet plan updated successfully`,
+      response:{paymentResponse}
     });
   } catch (error) {
     console.error("Service Booking Error:", error);
@@ -271,13 +278,18 @@ const SERVICE_PRICES = {
   "cardio_trainer": 5500,
 };
 
-const createOrder = async (service_type,user_id) => {
+const createOrder = async (service_type,user_id,price,from) => {
   try {
-    if (!SERVICE_PRICES[service_type]) {
-      throw new Error("Invalid service type")
+    console.log("service_type,user_id,price,from======",service_type,user_id,price,from);
+    let amount=price;
+    if(from==="trainer")
+    {
+      if (!SERVICE_PRICES[service_type]) {
+        throw new Error("Invalid service type")
+      }
+      amount = SERVICE_PRICES[service_type] * 100;
     }
 
-    const amount = SERVICE_PRICES[service_type] * 100;
     const order = await razorpay.orders.create({
       amount,
       currency: "INR",
