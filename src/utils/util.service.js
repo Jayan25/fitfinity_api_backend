@@ -184,16 +184,16 @@ module.exports.createAndSendEnquiry = async function (userDetail) {
     
 
     if (nearbyTrainers.length === 0) {
-      await sendAdminNoTrainerFoundEmail(userDetail);
+    await sendAdminNoTrainerFoundEmail(userDetail);
     } else {
-      for (let trainer of nearbyTrainers) {
+    for (let trainer of nearbyTrainers) {
         
-        await sendTrainerNotificationEmail({
-          email: trainer.email,
-          name: trainer.name
-        }, userDetail);
-      }
+    await sendTrainerNotificationEmail({
+    email: trainer.email,
+    name: trainer.name
+    }, userDetail);
     }
+}
 
   } catch (error) {
     console.error("Error in createAndSendEnquiry:", error.message);

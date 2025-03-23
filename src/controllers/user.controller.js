@@ -42,7 +42,7 @@ module.exports.SignUp = async function (req, res) {
       { expiresIn: "30d" }
     );
 
-    return ReS(res, "Registration successful! OTP sent to your email.",{users, token});
+    return ReS(res, "Registration successful! OTP sent to your email.",{user,authorisation:{ token, type: "bearer"}});
   } catch (error) {
     console.error(error);
     return ReE(res, "Error during registration. Please try again.");
@@ -330,7 +330,7 @@ const createOrder = async (service_type,user_id,price,from,id) => {
     }
 
     const order = await razorpay.orders.create({
-      amount,
+      amount:amount*100,
       currency: "INR",
       receipt: `receipt_${Date.now()}`,
       payment_capture: 1,
