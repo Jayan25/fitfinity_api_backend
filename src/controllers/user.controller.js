@@ -36,11 +36,12 @@ module.exports.SignUp = async function (req, res) {
 
     // let distance=createAndSendEnquiry(userData);
 
-    const token = jwt.sign(
-      { userId: newUser.id, email: newUser.email },
-      "your_jwt_secret",
-      { expiresIn: "30d" }
-    );
+    // const token = jwt.sign(
+    //   { userId: newUser.id, email: newUser.email },
+    //   "your_jwt_secret",
+    //   { expiresIn: "30d" }
+    // );
+    let token = generateToken(users)
 
     return ReS(res, "Registration successful! OTP sent to your email.",{user,authorisation:{ token, type: "bearer"}});
   } catch (error) {
