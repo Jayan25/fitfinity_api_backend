@@ -1,10 +1,21 @@
-const { Trainers, Users, service_bookings,enquiry,diet_plan,Payment } = require("../models/index");
+const {
+  Trainers,
+  Users,
+  service_bookings,
+  enquiry,
+  diet_plan,
+  Payment,
+  connection_data,
+} = require("../models/index");
 const { ReE, ReS, createAndSendEnquiry } = require("../utils/util.service");
+const { createOrder } = require("../utils/payment.service");
 const jwt = require("jsonwebtoken");
 const { generateToken } = require("../utils/jwtUtils");
+const { Op } = require("sequelize");
 const Razorpay = require("razorpay");
 const crypto = require("crypto");
 const dotenv = require("dotenv");
+const bcrypt = require("bcryptjs");
 dotenv.config();
 
 module.exports.SignUp = async function (req, res) {
@@ -12,14 +23,16 @@ module.exports.SignUp = async function (req, res) {
     const { fullname, email, mobile, password } = req.body;
     // send user detail like singin
     // const otp = Math.floor(1000 + Math.random() * 9000);
-
+    const hashedPassword = await bcrypt.hash(password, 10);
+    console.log("hashedPassword========",hashedPassword);
+    
     // Create a new trainer instance using Sequelize
     console.log("trainers:::::::::::::", Users);
     const newUser = await Users.create({
       name: fullname,
       email,
       mobile,
-      password,
+      password:hashedPassword,
       // otp,
       // email_verified_at:new Date(),
     });
@@ -41,9 +54,12 @@ module.exports.SignUp = async function (req, res) {
     //   "your_jwt_secret",
     //   { expiresIn: "30d" }
     // );
-    let token = generateToken(users)
+    let token = generateToken(users);
 
-    return ReS(res, "Registration successful! OTP sent to your email.",{user,authorisation:{ token, type: "bearer"}});
+    return ReS(res, "Registration successful! OTP sent to your email.", {
+      user,
+      authorisation: { token, type: "bearer" },
+    });
   } catch (error) {
     console.error(error);
     return ReE(res, "Error during registration. Please try again.");
@@ -59,8 +75,10 @@ module.exports.userLogin = async function (req, res) {
     if (!users) {
       return ReE(res, "Email not found.", 400);
     }
+    console.log("hashedPassword========",users.password);
 
-    if (password != users.password) {
+    const isMatch = await bcrypt.compare(password, users.password);
+    if (!isMatch) {
       return ReE(res, "Incorrect password.", 400);
     }
     let token = generateToken(users);
@@ -98,7 +116,7 @@ module.exports.createOrUpdateServiceBooking = async (req, res) => {
         .json({ message: "Step 1 must be completed first." });
     }
 
-    let serviceBookingsData= await service_bookings.create({
+    let serviceBookingsData = await service_bookings.create({
       user_id,
       service_type: req.body.service_type,
       booking_name: req.body.booking_name,
@@ -116,20 +134,26 @@ module.exports.createOrUpdateServiceBooking = async (req, res) => {
 
     //1. After this write the payment code.
     //2. Take the above service id and update it with latest payment table entry.
-   let paymentResponse= await createOrder(req.body.service_type,user_id,0,"trainer",serviceBookingsData.id)
-   
-    let userDetail=await Users.findOne({
-      where:{
-        id:user_id
+    let paymentResponse = await createOrder(
+      req.body.service_type,
+      user_id,
+      0,
+      "trainer",
+      serviceBookingsData.id
+    );
+
+    let userDetail = await Users.findOne({
+      where: {
+        id: user_id,
       },
-      attributes: ['id', 'email', 'name', 'lat', 'lon']
+      attributes: ["id", "email", "name", "lat", "lon"],
     });
 
-// code to send email to all the matched trainer in 10 KM radius
-    // await createAndSendEnquiry(userDetail)
+    // code to send email to all the matched trainer in 10 KM radius
+    await createAndSendEnquiry(userDetail, serviceBookingsData.id);
     return res.status(200).json({
       message: `Booking data updated successfully`,
-      response:{...serviceBookingsData,paymentResponse}
+      response: { ...serviceBookingsData, paymentResponse },
     });
   } catch (error) {
     console.error("Service Booking Error:", error);
@@ -166,16 +190,16 @@ module.exports.latlonUpdation = async function (req, res) {
 module.exports.natalEnquiry = async function (req, res) {
   try {
     let dataData = {
-      name:  req.body.name,
-      email:  req.body.email,
-      address:  req.body.address,
-      phone:  req.body.phone,
-      requirement:  req.body.requirement,
-      user_id:1,
-      enquiry_for:"natal"
+      name: req.body.name,
+      email: req.body.email,
+      address: req.body.address,
+      phone: req.body.phone,
+      requirement: req.body.requirement,
+      user_id: 1,
+      enquiry_for: "natal",
     };
-    let a=await enquiry.create(dataData);
-console.log("a=================================================",a);
+    let a = await enquiry.create(dataData);
+    console.log("a=================================================", a);
 
     return ReS(res, "Enquiry submitted");
   } catch (error) {
@@ -185,19 +209,16 @@ console.log("a=================================================",a);
 };
 module.exports.corporatePlan = async function (req, res) {
   try {
-  
-
     let dataData = {
-      name:  req.body.name,
-      email:  req.body.email,
-      company_name:  req.body.company_name,
-      phone:  req.body.phone,
-      requirement:  req.body.requirement,
-      user_id:1,
-      enquiry_for:"corporate"
-
+      name: req.body.name,
+      email: req.body.email,
+      company_name: req.body.company_name,
+      phone: req.body.phone,
+      requirement: req.body.requirement,
+      user_id: 1,
+      enquiry_for: "corporate",
     };
-    let a=await enquiry.create(dataData);
+    let a = await enquiry.create(dataData);
 
     return ReS(res, "Enquiry submitted");
   } catch (error) {
@@ -206,40 +227,42 @@ module.exports.corporatePlan = async function (req, res) {
   }
 };
 
-
-
 module.exports.dietPlan = async (req, res) => {
   try {
     const user_id = req.user.id;
 
     // "type": "weight and muscle gain", //[ "weight and muscle gain","weight and fat loss","thyroid and diabetic","meal plan"]
 
+    let diet_pan_detail = await diet_plan.create({
+      user_id,
+      type: req.body.type,
+      price: req.body.price,
+      plan_for: req.body.plan_for,
+      gender: req.body.gender,
+      name: req.body.name,
+      number: req.body.number,
+      age: req.body.age,
+      height: req.body.height,
+      weight: req.body.weight,
+      goal: req.body.goal,
+      diet_type: req.body.diet_type,
+      daily_physical_activity: req.body.daily_physical_activity,
+      allergy: req.body.allergy,
+      plan_type: req.body.plan_type,
+      final_price: req.body.final_price,
+    });
 
-    let diet_pan_detail=await diet_plan.create(
-      {
-        user_id,
-        type:req.body.type,
-        price:req.body.price,
-        plan_for: req.body.plan_for, 
-        gender:req.body.gender,
-        name: req.body.name,
-        number: req.body.number,
-        age:req.body.age,
-        height: req.body.height,
-        weight: req.body.weight,
-        goal: req.body.goal,
-        diet_type:req.body.diet_type,
-        daily_physical_activity: req.body.daily_physical_activity,
-        allergy: req.body.allergy,
-        plan_type: req.body.plan_type,
-        final_price: req.body.final_price
-    })
-
-    let paymentResponse= await createOrder(req.body.type,user_id,req.body.price,"diet",diet_pan_detail.id)
+    let paymentResponse = await createOrder(
+      req.body.type,
+      user_id,
+      req.body.price,
+      "diet",
+      diet_pan_detail.id
+    );
 
     return res.status(200).json({
       message: `Diet plan updated successfully`,
-      response:{paymentResponse}
+      response: { paymentResponse },
     });
   } catch (error) {
     console.error("Service Booking Error:", error);
@@ -255,14 +278,14 @@ module.exports.transaction = async function (req, res) {
     offset = isNaN(Number(offset)) ? 0 : Number(offset);
 
     const payments = await Payment.findAndCountAll({
+      where: {
+        user_id: req.user.id,
+      },
       include: [
         {
           model: service_bookings,
           as: "service_booking",
           required: true,
-          where: {
-            user_id:req.user.id
-          },
           attributes: [
             "id",
             "booking_name",
@@ -274,7 +297,7 @@ module.exports.transaction = async function (req, res) {
             "training_needed_for",
             "payment_status",
             "service_booking_step",
-            "created_at"
+            "created_at",
           ],
         },
       ],
@@ -298,100 +321,82 @@ module.exports.transaction = async function (req, res) {
   }
 };
 
-
-
-const razorpay = new Razorpay({
-  key_id: process.env.RAZORPAY_KEY_ID,
-  key_secret: process.env.RAZORPAY_KEY_SECRET,
-});
-
-const SERVICE_PRICES = {
-  "fitness": 99,
-  "yoga": 99,
-  "weight_loss_trainer": 6000,
-  "kickboxing_trainer": 4500,
-  "mma_trainer": 7000,
-  "cardio_trainer": 5500,
-};
-
-const createOrder = async (service_type,user_id,price,from,id) => {
+module.exports.dietTransaction = async function (req, res) {
   try {
-    let amount=price;
-    let service_booking_id
-    let diet_plan_id
-    if(from==="trainer")
-    {
-      if (!SERVICE_PRICES[service_type]) {
-        throw new Error("Invalid service type")
-      }
-      amount = SERVICE_PRICES[service_type] * 100;
-      service_booking_id=id
-    }else{
-      diet_plan_id=id
-    }
+    let { limit, offset, search } = req.query;
 
-    const order = await razorpay.orders.create({
-      amount:amount*100,
-      currency: "INR",
-      receipt: `receipt_${Date.now()}`,
-      payment_capture: 1,
-      notes: {
-        key1: "value3",
-        key2: "value2"
-    }
+    limit = isNaN(Number(limit)) ? 10 : Number(limit);
+    offset = isNaN(Number(offset)) ? 0 : Number(offset);
+
+    const payments = await Payment.findAndCountAll({
+      where: {
+        user_id: req.user.id,
+      },
+      include: [
+        {
+          model: diet_plan,
+          as: "diet_plan",
+          required: true,
+        },
+      ],
+      attributes: [
+        "id",
+        "order_id",
+        "payment_id",
+        "amount",
+        "status",
+        "created_at",
+      ],
+      order: [["created_at", "DESC"]],
+      limit,
+      offset,
     });
 
-    // Store order in DB
-    let paymanredata=await Payment.create({
-      user_id: user_id,
-      service_type,
-      order_id: order.id,
-      trainer_id:123,
-      amount,
-      status: "pending",
-      service_booking_id,
-      diet_plan_id
-    });    
-
-    let data={
-      amount,
-      order_id:order.id
-    }
-    return data
+    return ReS(res, "Fitness Payments fetched", payments);
   } catch (error) {
-    console.error(error);
-    throw new Error("Payment Failed!")
+    console.error("Error fetching Fitness Payments:", error);
+    return ReE(res, "An error occurred while fetching Fitness Payments", 500);
   }
 };
 
-// 📌 Verify Payment After Completion
-module.exports.verifyPayment = async (req, res) => {
+module.exports.ongoingEnquiry = async (req, res) => {
   try {
-    const { order_id, payment_id, razorpay_signature } = req.body;
+    console.log("i am hereeeeeeeee", req.user);
+    console.log("i am hereeeeeeeeconnection_datae", connection_data);
 
-    // Verify Razorpay Signature
-    const body = order_id + "|" + payment_id;
-    const expectedSignature = crypto
-      .createHmac("sha256", process.env.RAZORPAY_KEY_SECRET)
-      .update(body)
-      .digest("hex");
+    let allReceivedConnectionList = await connection_data.findAndCountAll({
+      where: {
+        user_id: req.user.id,
+        status: 1,
+      },
+      include: [
+        {
+          model: Trainers,
+          as: "trainer",
+          attributes: [
+            "id",
+            "name",
+            "email",
+            "phone",
+            "service_type",
+            "experience",
+          ], // Add more fields if needed
+        },
+      ],
+    });
 
-    if (expectedSignature === razorpay_signature) {
-      await Payment.update(
-        { status: "success", payment_id },
-        { where: { order_id } }
-      );
-      return res.json({ success: true, message: "Payment verified" });
-    } else {
-      await Payment.update(
-        { status: "failed" },
-        { where: { order_id } }
-      );
-      return res.status(400).json({ error: "Invalid payment signature" });
-    }
+    return ReS(
+      res,
+      "Enquiry Fetched success!",
+      (response = {
+        allReceivedConnectionList,
+      })
+    );
   } catch (error) {
-    console.error(error);
-    return res.status(500).json({ error: "Payment verification failed" });
+    console.error("ongoing Enquiry fetching error:", error);
+    return res
+      .status(500)
+      .json({ message: "ongoing Enquiry fetching error", error });
   }
 };
 
@@ -405,15 +410,196 @@ module.exports.razorpayWebhook = async (req, res) => {
       .digest("hex");
 
     if (signature === expectedSignature) {
-      console.log(" Webhook Signature Verified");
-      console.log(" Event Data:", req.body);
-      console.log(" Event Data:", req.body.payload);
-      console.log(" Event Data:", req.body.payload.payment.entity.notes);
+      console.log(" stater[[[[[[[[[[[[[[[[[[]]]]]]]]]]]]]]]]]]====", req.body);
+      console.log(
+        " notessssss=========",
+        req.body.payload.payment.entity.notes
+      );
+      switch (req.body.event) {
+        case "payment.authorized":
+          console.log("ℹ️ Payment authorized:", paymentEntity.id);
+          break;
 
-      return res.status(200).json({ success: true, message: "Webhook verified and processed" });
+          case "payment.captured":
+            console.log(" notessssss========11111");
+
+        if (req.body.payload.payment.entity.notes.trail === true) {
+          console.log(" notessssss========12222222222221");
+          let service_booking_id =
+            req.body.payload.payment.entity.notes.service_booking_id;
+
+          let paymentDetail = await Payment.findOne({
+            where: {
+              service_booking_id,
+              service_type: req.body.payload.payment.entity.notes.service_type,
+              amount: 99,
+            },
+          });
+
+          if (!paymentDetail) {
+            throw new Error("Payment detail not found!");
+          }
+
+          await Payment.update(
+            {
+              status: "success",
+            },
+            {
+              where: {
+                id: paymentDetail.id,
+              },
+            }
+          );
+
+          console.log(" notessssss========12222233333");
+          await service_bookings.update(
+            {
+              trial_taken: true,
+              trainer_id: paymentDetail.trainer_id,
+            },
+            {
+              where: {
+                service_booking_id,
+              },
+            }
+          );
+        } else {
+          // there will be two condition
+          // 1. payment after taile which is service
+          //2. payment of diet plan
+
+          // if service id is present means, it is for service of type trainer or yoga
+          //else is s payment for diet
+          if (req.body.payload.payment.entity.notes.service_booking_id) {
+            let amount = parseInt(req.body.payload.payment.entity.amount / 100);
+            await Payment.update(
+              {
+                status: "success",
+              },
+              {
+                where: {
+                  service_booking_id:
+                    req.body.payload.payment.entity.notes.service_booking_id,
+                  service_type:
+                    req.body.payload.payment.entity.notes.service_type,
+                  amount: { [Op.gt]: 99 },
+                },
+              }
+            );
+
+            await service_bookings.update(
+              {
+                service_taken: true,
+              },
+              {
+                where: {
+                  service_booking_id:
+                    req.body.payload.payment.entity.notes.service_booking_id,
+                },
+              }
+            );
+          } else {
+            await Payment.update(
+              {
+                status: "success",
+              },
+              {
+                where: {
+                  diet_plan_id:
+                    req.body.payload.payment.entity.notes.diet_plan_id,
+                },
+              }
+            );
+          }
+          console.log(" notessssss========14444444443");
+          console.log(" notessssss========5555543");
+
+          console.log("4444444444449999999999999999");
+
+        }
+        break;
+
+        
+        case "payment.failed":
+          console.log("payment failed==========>>>>>>>>", req.body.payload.payment.entity.notes);
+          console.log(" notessssss========12222222222221");
+
+          // condition for trail payment fail for trainer or yoga
+          if (req.body.payload.payment.entity.notes.trail === true) {
+            let service_booking_id =
+            req.body.payload.payment.entity.notes.service_booking_id;
+
+          let paymentDetail = await Payment.findOne({
+            where: {
+              service_booking_id,
+              service_type: req.body.payload.payment.entity.notes.service_type,
+              amount: 99,
+            },
+          });
+
+          if (!paymentDetail) {
+            throw new Error("Payment detail not found!");
+          }
+
+          console.log(" notessssss========12222233333",paymentDetail);
+          await Payment.update(
+            {
+              status: "failed",
+            },
+            {
+              where: {
+                id: paymentDetail.id,
+              },
+            }
+          );
+
+          }else{
+            // condition for diet plan or trainer or yoga full payment faile 
+            if (req.body.payload.payment.entity.notes.service_booking_id) {
+              await Payment.update(
+                {
+                  status: "failed",
+                },
+                {
+                  where: {
+                    service_booking_id:
+                      req.body.payload.payment.entity.notes.service_booking_id,
+                    service_type:
+                      req.body.payload.payment.entity.notes.service_type,
+                    amount: { [Op.gt]: 99 },
+                  },
+                }
+              );
+  
+            } else {
+              await Payment.update(
+                {
+                  status: "failed",
+                },
+                {
+                  where: {
+                    diet_plan_id:
+                      req.body.payload.payment.entity.notes.diet_plan_id,
+                  },
+                }
+              );
+            }
+
+          }
+         
+          break;
+        default:
+          console.log("Found nothing:")
+      }
+
+      return res
+        .status(200)
+        .json({ success: true, message: "Webhook verified and processed" });
     } else {
       console.log(" Signature mismatch");
-      return res.status(400).json({ success: false, message: "Invalid signature" });
+      return res
+        .status(400)
+        .json({ success: false, message: "Invalid signature" });
     }
   } catch (err) {
     console.error("Webhook processing error:", err);

@@ -111,6 +111,11 @@ module.exports = (sequelize, DataTypes) => {
       as: "service_bookings",
       constraints: false, 
     });
+    Users.hasMany(models.connection_data, {
+      foreignKey: "user_id",
+      as: "connection_data",
+      constraints: false, 
+    });
   };
 
   return Users;

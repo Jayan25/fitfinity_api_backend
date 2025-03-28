@@ -26,6 +26,9 @@ router.get("/trainer-transaction", authentication,  trainerController.transactio
 router.get("/enquiry", authentication,  trainerController.enquiry);
 router.get("/ongoing-enquiry", authentication,  trainerController.ongoingEnquiry);
 router.post("/helpAndSupport", validate(common.helpAndSuppoprt), commonController.helpAndSupport);
+router.post("/accept-reject-connection", authentication,  trainerController.acceptRejectConnection);
+router.post("/start-stop-service", authentication,  trainerController.startStopService);
+router.post("/otp-verfication", authentication,  trainerController.otpVerification);
 
 
 //1 Accept enquiry api, 

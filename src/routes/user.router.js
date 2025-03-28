@@ -16,10 +16,11 @@ router.post("/natalEnquiry",  userController.natalEnquiry);
 router.post("/corporatePlan",  userController.corporatePlan);
 router.post("/helpAndSupport", authentication,validate(common.helpAndSuppoprt), commonController.helpAndSupport);
 router.get("/user-transaction", authentication,  userController.transaction);
+router.get("/user-diet-transaction", authentication,  userController.dietTransaction);
+router.get("/ongoing-enquiry", authentication,  userController.ongoingEnquiry);
 
 // payment gateway apis
 // router.post("/create-order",authentication, userController.createOrder);
-router.post("/verify-payment", authentication, userController.verifyPayment);
 router.post("/razorpay-webhook", userController.razorpayWebhook);
 
 module.exports = router;
