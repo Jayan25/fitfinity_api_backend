@@ -28,6 +28,11 @@ module.exports = (sequelize, DataTypes) => {
       allowNull: false,
       defaultValue: 0, // 0: sent, 1: accepted, 2: rejected,3:completed
     },
+    opt_verification:{
+      type: DataTypes.TINYINT, // better than INTEGER for status codes
+      allowNull: false,
+      defaultValue: 0,   //0: not started , 1:done
+    },
     deleted_at: {
       type: DataTypes.DATE,
       allowNull: true,

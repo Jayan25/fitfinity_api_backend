@@ -350,7 +350,7 @@ module.exports.ongoingEnquiry = async (req, res) => {
     let allReceivedConnectionList = await connection_data.findAndCountAll({
       where: {
         trainer_id: req.user.id,
-        status: 1,
+        status: { [Op.in]: [1, 4] }, 
       },
       include: [
         {
@@ -520,11 +520,22 @@ module.exports.otpVerification = async (req, res) => {
         otp,
       },
     });
-
+    
     if (!findConnection) {
       return ReE(res, "Otp is not correct!");
     }
-
+    
+     await connection_data.update(
+      {
+        opt_verification:1
+      },
+      {
+      where: {
+        id: connection_id,
+        status: 1,
+        otp,
+      },
+    });
     return ReS(res, "Otp is verified");
   } catch (error) {
     console.error("ongoing Enquiry fetching error:", error);
