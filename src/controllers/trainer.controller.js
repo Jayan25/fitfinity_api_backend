@@ -4,6 +4,7 @@ const {
   Versions,
   connection_data,
   Users,
+  service_bookings
 } = require("../models/index");
 const { ReE, ReS, sendEmail, sendOtp } = require("../utils/util.service");
 const { genereateDynamicPaymentLink } = require("../utils/payment.service");
@@ -12,6 +13,7 @@ const { generateToken } = require("../utils/jwtUtils");
 const { generateOrderSignedUploadUrl } = require("../utils/aws.service");
 const {sendPaymentLink}=require("../utils/util.service")
 const bcrypt = require("bcryptjs");
+const { Op } = require("sequelize");
 // const Razorpay = require("razorpay");
 // const crypto = require("crypto");
 const dotenv = require("dotenv");
@@ -332,16 +334,30 @@ module.exports.enquiry = async (req, res) => {
         trainer_id: req.user.id,
         status: 0,
       },
+       include: [
+        {
+          model: Users,
+          as: "user",
+          attributes: ["id", "name", "email", "mobile","address","image"],
+        },
+        {
+              model: service_bookings,
+              as: "service_booking",
+              required: true,
+        },
+      ],
     });
 
     return ReS(
-      res,
+      res,  
       "Enquiry Fetched success!",
       (response = {
         allReceivedConnectionList,
       })
     );
   } catch (error) {
+    console.log("error--------------",error);
+    
     return res.status(500).json({ message: "Enquiry fetching error:", error });
   }
 };
@@ -356,8 +372,13 @@ module.exports.ongoingEnquiry = async (req, res) => {
         {
           model: Users,
           as: "user",
-          attributes: ["id", "name", "email", "mobile"],
+          attributes: ["id", "name", "email", "mobile","address","image"],
         },
+        {
+          model: service_bookings,
+          as: "service_booking",
+          required: true,
+    },
       ],
     });
 
@@ -494,12 +515,13 @@ module.exports.startStopService = async (req, res) => {
    
       let paymentLink=await genereateDynamicPaymentLink(findConnection,userDetail,trainerDetail)
       let emailData = {
-        email: userData.email,
-        name: userData.name,
+        email: userDetail.email,
+        name: userDetail.name,
         service_type:serviceBookingsData.service_type,
         paymentLink
       };
       await sendPaymentLink(emailData)
+      message="payment link is sent on registerd email"
     }
 
     return ReS(res, message);

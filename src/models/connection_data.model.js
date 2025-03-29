@@ -56,7 +56,7 @@ module.exports = (sequelize, DataTypes) => {
       foreignKey: "trainer_id",
       as: "trainer",
     });
-    connection_data.belongsTo(models.Trainers, {
+    connection_data.belongsTo(models.service_bookings, {
       foreignKey: "service_booking_id",
       as: "service_booking",
     });
