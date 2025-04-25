@@ -29,7 +29,11 @@ module.exports = (sequelize) => {
         type: DataTypes.STRING,
         allowNull: false,
       },
-      // Add this inside the Payment model fields
+      currency: {
+        type: DataTypes.STRING(10),
+        allowNull: false, 
+        defaultValue: 'INR', 
+      },
       service_booking_id: {
         type: DataTypes.BIGINT,
         allowNull: true,

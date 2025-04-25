@@ -65,6 +65,7 @@ module.exports.createOrder = async (service_type, user_id, price, from, id) => {
       status: "pending",
       service_booking_id,
       diet_plan_id,
+      currency: "INR",
     });
     console.log("paymanredata=====", paymanredata);
 
@@ -122,6 +123,7 @@ module.exports.genereateDynamicPaymentLink = async (
         amount:100,
         status: "pending",
         service_type: serviceBookingsData.service_type,
+        currency: "INR"
       });
 
     console.log("order=========", paymanredata);

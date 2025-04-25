@@ -93,6 +93,11 @@ module.exports = (sequelize, DataTypes) => {
       allowNull: true,
       defaultValue: 'pending',
     },
+    fcm_token: {
+      type: DataTypes.STRING,
+      allowNull: true,
+      defaultValue: null,
+    },
     block_status: {
       type: DataTypes.ENUM('Blocked', 'Unblocked'),
       allowNull: true,
