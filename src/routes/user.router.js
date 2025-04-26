@@ -8,6 +8,7 @@ const common=require("../validations/common.js")
 const {authentication} = require("../utils/jwtUtils.js");
 
 router.post("/userRegister",validate(user.userRegisterValidation), userController.SignUp);
+router.get("/hashExistingPasswords", userController.hashExistingPasswords);
 router.post("/userLogin",validate(user.userLoginValidation), userController.userLogin);
 router.post("/createOrUpdateBooking",authentication,validate(user.serviceBookingValidation), userController.createOrUpdateServiceBooking);
 router.post("/dietPlan", authentication, userController.dietPlan);
@@ -22,5 +23,6 @@ router.get("/ongoing-enquiry", authentication,  userController.ongoingEnquiry);
 // payment gateway apis
 // router.post("/create-order",authentication, userController.createOrder);
 router.post("/razorpay-webhook", userController.razorpayWebhook);
+router.post("/new", userController.new);
 
 module.exports = router;

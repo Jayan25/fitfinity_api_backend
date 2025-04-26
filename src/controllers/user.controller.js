@@ -66,6 +66,34 @@ module.exports.SignUp = async function (req, res) {
   }
 };
 
+module.exports.hashExistingPasswords = async function (req, res) {
+  try {
+    // Fetch all users
+    const users = await Trainers.findAll();
+    
+    for (const user of users) {
+      // Check if the password is already hashed
+      if (!user.password.startsWith("$2b$")) { 
+        const hashedPassword = await bcrypt.hash(user.password, 10);
+        console.log("hashedPassword=========",user.password,user.id);
+        
+        
+        // Update user password
+        await Trainers.update(
+          { password: hashedPassword },
+          { where: { id: user.id } }
+        );
+      }
+    }
+
+    return res.json({ message: "All passwords updated successfully." });
+  } catch (error) {
+    console.error("Error updating passwords:", error);
+    return res.status(500).json({ error: "Internal server error." });
+  }
+};
+
+
 module.exports.userLogin = async function (req, res) {
   try {
     const { email, password } = req.body;
@@ -78,6 +106,9 @@ module.exports.userLogin = async function (req, res) {
     console.log("hashedPassword========",users.password);
 
     const isMatch = await bcrypt.compare(password, users.password);
+    console.log("============password==",password)
+    console.log("============users.password==",users.password)
+    console.log("==============",isMatch)
     if (!isMatch) {
       return ReE(res, "Incorrect password.", 400);
     }
@@ -606,3 +637,19 @@ module.exports.razorpayWebhook = async (req, res) => {
     return res.status(500).json({ success: false, message: "Server error" });
   }
 };
+
+module.exports.new=(req,res)=>{
+try{
+
+
+  console.log(
+    "body",req.body
+  );
+
+  return ReS(res,"Success")
+  
+}catch(error){
+  console.log(error)
+  ReE(res,"Failed")
+}
+}

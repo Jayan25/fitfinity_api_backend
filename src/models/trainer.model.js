@@ -98,6 +98,11 @@ module.exports = (sequelize, DataTypes) => {
       allowNull: true,
       defaultValue: 'Unblocked',
     },
+    kyc_reject_reason: {
+      type: DataTypes.STRING,
+      allowNull: true,
+      defaultValue: null,
+    },
     email_verified_at: {
       type: DataTypes.DATE,
       allowNull: true,

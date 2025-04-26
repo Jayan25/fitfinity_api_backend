@@ -8,7 +8,7 @@ const {
   diet_plan,
   Payment,
 } = require("../models/index");
-const { ReE, ReS, sendEmail } = require("../utils/util.service");
+const { ReE, ReS, sendEmail, sendKycRejectionEmail } = require("../utils/util.service");
 const { generateToken } = require("../utils/jwtUtils");
 const { off } = require("../../app");
 const { Op } = require("sequelize");
@@ -47,18 +47,22 @@ module.exports.login = async function (req, res) {
 
 module.exports.getAllTrainers = async function (req, res) {
   try {
-    let { limit, offset, search } = req.query;
+    let { limit, offset, search, kyc_status, block_status } = req.query;
 
     limit = isNaN(Number(limit)) ? 10 : Number(limit);
     offset = isNaN(Number(offset)) ? 0 : Number(offset);
 
-    let where = search
-      ? {
-          name: {
-            [Op.like]: `${search}%`,
-          },
-        }
-      : {};
+    let where = {};
+    if (search) {
+      where.name = { [Op.like]: `${search}%` };
+    }
+    if (kyc_status) {
+      where.kyc_status = kyc_status;
+    }
+    if (block_status) {
+      where.block_status = block_status;
+    }
+
 
     const trainers = await Trainers.findAndCountAll({
       where: where,
@@ -197,7 +201,7 @@ module.exports.updateDocument = async function (req, res) {
 module.exports.verifyTrainerKyc = async function (req, res) {
   try {
     const { id } = req.params;
-    const { kyc_status } = req.body;
+    const { kyc_status, reject_reason } = req.body;
     if (!id || isNaN(id)) {
       return ReE(res, "Invalid trainer ID provided", 400);
     }
@@ -209,7 +213,11 @@ module.exports.verifyTrainerKyc = async function (req, res) {
     }
 
     if (kyc_status === "done") {
-      await Trainers.update({ kyc_status: kyc_status }, { where: { id } });
+      // KYC approved: clear any previous rejection reason
+      await Trainers.update(
+        { kyc_status: kyc_status, kyc_reject_reason: null },
+        { where: { id } }
+      );
       let where = {
         trainer_id: id,
       };
@@ -226,11 +234,26 @@ module.exports.verifyTrainerKyc = async function (req, res) {
         name: trainerData.name,
       };
       await sendEmail(emailData);
+    } else {
+      // KYC failed: store rejection reason and mark documents as failed
+      await Trainers.update(
+        { kyc_status: kyc_status, kyc_reject_reason: reject_reason },
+        { where: { id } }
+      );
+      const docWhere = { trainer_id: id };
+      await TrainerDocument.update(
+        { verfication_status: "failed" },
+        { where: docWhere }
+      );
+      // Send rejection email to trainer
+      await sendKycRejectionEmail({
+        email: trainerData.email,
+        name: trainerData.name,
+        reject_reason: reject_reason,
+      });
     }
 
-
-
-    return ReS(res, "Trainer key status updated!");
+    return ReS(res, "Trainer KYC status updated!");
   } catch (error) {
     console.error("Error while updating trainer", error);
     return ReE(res, "An error occurred while updating the trainer", 500);

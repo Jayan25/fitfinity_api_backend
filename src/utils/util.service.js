@@ -42,7 +42,7 @@ module.exports.sendEmail = async function (emailData) {
       </div>
       <p>Dear ${emailData.name},</p>
 
-      <p>Congratulations and welcome to <strong>Fitfinity Trainer</strong>! We’re thrilled to have you join our team. Your passion for fitness and commitment to helping others achieve their goals make you a perfect fit for our community.</p>
+      <p>Congratulations and welcome to <strong>Fitfinity Trainer</strong>! We're thrilled to have you join our team. Your passion for fitness and commitment to helping others achieve their goals make you a perfect fit for our community.</p>
 
       <p>At <strong>Fitfinity Trainer</strong>, we aim to provide an engaging and supportive environment where trainers like you can connect with clients, share expertise, and grow professionally.</p>
 
@@ -51,7 +51,7 @@ module.exports.sendEmail = async function (emailData) {
       <p>Follow us on Instagram: <a href="https://www.instagram.com/fitfinitytrainer?igsh=YmplM2c5azI1d21j&utm_source=qr" target="_blank">Fitfinity Trainer Instagram</a></p>
       <p>Follow us on Facebook: <a href="https://www.facebook.com/share/1B9HU1t77t/" target="_blank">Fitfinity Trainer Facebook</a></p>
 
-      <p>Once again, welcome aboard! We’re excited to see you thrive and make a positive impact.</p>
+      <p>Once again, welcome aboard! We're excited to see you thrive and make a positive impact.</p>
 
       <p>Best regards,</p>
       <p><strong>Team Fitfinity Trainer</strong></p>
@@ -135,7 +135,7 @@ module.exports.sendOtp = async function (emailData) {
     html: `
       <p>Dear ${emailData.name},</p>
 
-      <p>Congratulation,You’re just one step away from starting your service.</p>
+      <p>Congratulation,You're just one step away from starting your service.</p>
       <p> Please share this ${emailData.otp} OTP only with the trainer upon their arrival at your address. </p>
 
       <p>For security reasons, do not share it with anyone, including the trainer, via phone call or message.<p>
@@ -192,6 +192,33 @@ module.exports.sendPaymentLink=async function(emailData){
     });
   
 }
+//<p>Please review the reason above and resubmit your documents at your earliest convenience by logging into your account portal.</p>
+
+// New function: send KYC rejection email template
+module.exports.sendKycRejectionEmail = async function (emailData) {
+  const receiver = {
+    from: process.env.EMAIL,
+    to: emailData.email,
+    subject: `KYC Verification Failed — Fitfinity Trainer`,
+    html: `
+      <p>Dear ${emailData.name},</p>
+      <p>We regret to inform you that your KYC verification for <strong>Fitfinity Trainer</strong> has been <strong>rejected</strong>.</p>
+      <p><strong>Reason:</strong> ${emailData.reject_reason || 'Not specified'}</p>
+      <p>Please review the reason above and contact to our support team.</p>
+      <p>If you have any questions or need assistance, feel free to reach out to our support team at <a href="mailto:fitfinitytrainer@gmail.com">fitfinitytrainer@gmail.com</a>.</p>
+      <p>Best regards,</p>
+      <p><strong>Team Fitfinity Trainer</strong></p>
+    `,
+  };
+  transporter.sendMail(receiver, (error, info) => {
+    if (error) {
+      console.error("KYC rejection email failed:", error);
+    } else {
+      console.log("KYC rejection email sent to", emailData.email);
+    }
+  });
+};
+
 const RADIUS_KM = process.env.RADIUS_KM;
 
 function calculateDistance(lat1, lon1, lat2, lon2) {
