@@ -58,6 +58,7 @@ module.exports.getAllTrainers = async function (req, res) {
     }
     if (kyc_status) {
       where.kyc_status = kyc_status;
+      
     }
     if (block_status) {
       where.block_status = block_status;
