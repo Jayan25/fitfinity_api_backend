@@ -567,6 +567,33 @@ module.exports.otpVerification = async (req, res) => {
   }
 };
 
+
+
+module.exports.saveFcmToken = async function (req, res) {
+  try {
+    const { token } = req.body;
+    const trainerId = req.user.id;
+
+    if (!token) {
+      return ReE(res, "FCM token is required", 400);
+    }
+
+    const trainer = await Trainers.findByPk(trainerId);
+    if (!trainer) {
+      return ReE(res, "Trainer not found", 404);
+    }
+
+    trainer.fcm_token = token;
+    await trainer.save();
+
+    return ReS(res, "FCM token updated successfully");
+  } catch (error) {
+    console.error("Error saving FCM token:", error);
+    return ReE(res, "Something went wrong");
+  }
+};
+
+
 // const razorpay = new Razorpay({
 //   key_id: process.env.RAZORPAY_KEY_ID,
 //   key_secret: process.env.RAZORPAY_KEY_SECRET,

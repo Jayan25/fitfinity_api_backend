@@ -56,3 +56,6 @@ docker-compose.override.yml
 
 # Debugger
 *.log.[0-9]*
+
+#firebase key
+serviceAccountKey.json

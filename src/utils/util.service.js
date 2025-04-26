@@ -1,6 +1,7 @@
 const nodemailer = require("nodemailer");
 const { Users, Trainers ,connection_data} = require("../models/index");
 const dotenv = require("dotenv");
+const admin = require('../../firebase');
 dotenv.config();
 
 module.exports.ReE = async function (res, err, code) {
@@ -236,10 +237,78 @@ function calculateDistance(lat1, lon1, lat2, lon2) {
   return dist * 1.609344; // KM
 }
 
-module.exports.createAndSendEnquiry = async function (userDetail,service_booking_id) {
-  try {
-    console.log("Trainers===", service_booking_id);
+// module.exports.createAndSendEnquiry = async function (userDetail,service_booking_id) {
+//   try {
+//     console.log("Trainers===", service_booking_id);
 
+//     const trainerList = await Trainers.findAll({
+//       where: {
+//         kyc_status: "done",
+//         block_status: "Unblocked",
+//       },
+//       attributes: ["id", "email", "name", "lat", "lon"],
+//     });
+
+//     // console.log("trainerList==============", trainerList.length);
+
+//     const nearbyTrainers = [];
+
+//     // console.log("RADIUS_KM====", RADIUS_KM);
+
+//     for (let trainer of trainerList) {
+//       if (trainer.lat && trainer.lon && userDetail.lat && userDetail.lon) {
+//         const distance = calculateDistance(
+//           userDetail.lat,
+//           userDetail.lon,
+//           trainer.lat,
+//           trainer.lon
+//         );
+//         console.log("distane========", distance);
+
+//         if (distance <= RADIUS_KM) {
+//           nearbyTrainers.push(trainer);
+//         }
+//       }
+//     }
+
+//     let bulkUpdloadData=[];
+
+//     if (nearbyTrainers.length === 0) {
+//       // await sendAdminNoTrainerFoundEmail(userDetail);
+//     } else {
+//       for (let trainer of nearbyTrainers) {
+//         // await sendTrainerNotificationEmail(
+//         //   {
+//         //     email: trainer.email,
+//         //     name: trainer.name,
+//         //   },
+//         //   userDetail
+//         // );
+
+//         let data={
+//           user_id:userDetail.id,
+//           trainer_id:trainer.id,
+//           status:0,
+//           service_booking_id:service_booking_id
+//         }
+//         bulkUpdloadData.push(data)
+//       }
+//     }
+//     if (nearbyTrainers.length >= 0) {
+      
+//       let data=await connection_data.bulkCreate(bulkUpdloadData)
+      
+//     }
+//     return 
+//   } catch (error) {
+//     console.error("Error in createAndSendEnquiry:", error.message);
+//     throw new Error("Something went wrong while sending enquiry");
+//   }
+// };
+
+
+module.exports.createAndSendEnquiry = async function (userDetail, service_booking_id) {
+  try {
     const trainerList = await Trainers.findAll({
       where: {
         kyc_status: "done",
@@ -248,11 +317,7 @@ module.exports.createAndSendEnquiry = async function (userDetail,service_booking
       attributes: ["id", "email", "name", "lat", "lon"],
     });
 
-    // console.log("trainerList==============", trainerList.length);
-
     const nearbyTrainers = [];
-
-    // console.log("RADIUS_KM====", RADIUS_KM);
 
     for (let trainer of trainerList) {
       if (trainer.lat && trainer.lon && userDetail.lat && userDetail.lon) {
@@ -262,43 +327,61 @@ module.exports.createAndSendEnquiry = async function (userDetail,service_booking
           trainer.lat,
           trainer.lon
         );
-        console.log("distane========", distance);
-
         if (distance <= RADIUS_KM) {
           nearbyTrainers.push(trainer);
         }
       }
     }
 
-    let bulkUpdloadData=[];
+    let bulkUpdloadData = [];
 
-    if (nearbyTrainers.length === 0) {
-      // await sendAdminNoTrainerFoundEmail(userDetail);
-    } else {
+    if (nearbyTrainers.length > 0) {
       for (let trainer of nearbyTrainers) {
-        // await sendTrainerNotificationEmail(
-        //   {
-        //     email: trainer.email,
-        //     name: trainer.name,
-        //   },
-        //   userDetail
-        // );
+        bulkUpdloadData.push({
+          user_id: userDetail.id,
+          trainer_id: trainer.id,
+          status: 0,
+          service_booking_id,
+        });
 
-        let data={
-          user_id:userDetail.id,
-          trainer_id:trainer.id,
-          status:0,
-          service_booking_id:service_booking_id
+        // 📲 Get the FCM token of this trainer
+        const trainerUser = await Trainers.findOne({
+          where: { id: trainer.id },
+          attributes: ["fcm_token"],
+        });
+
+        //  Send notification
+        if (trainerUser?.fcm_token) {
+        
+          await admin.messaging().send({
+            notification: {
+              title: "New Enquiry Nearby!",
+              body: `${userDetail.name} is looking for training help near you.`,
+             
+            },
+            android: {
+              notification: {
+                sound: "fitring",
+                channelId: "custom-sound-channel", 
+              },
+            },
+            apns: {
+              payload: {
+                aps: {
+                  sound: "fitring.wav", //  for iOS
+                },
+              },
+            },
+            token: trainerUser.fcm_token,
+          });
         }
-        bulkUpdloadData.push(data)
       }
+
+      // Save connection data
+      await connection_data.bulkCreate(bulkUpdloadData);
     }
-    if (nearbyTrainers.length >= 0) {
-      
-      let data=await connection_data.bulkCreate(bulkUpdloadData)
-      
-    }
-    return 
+
+    return;
   } catch (error) {
     console.error("Error in createAndSendEnquiry:", error.message);
     throw new Error("Something went wrong while sending enquiry");

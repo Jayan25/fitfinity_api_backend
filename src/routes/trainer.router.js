@@ -29,6 +29,8 @@ router.post("/helpAndSupport", validate(common.helpAndSuppoprt), commonControlle
 router.post("/accept-reject-connection", authentication,  trainerController.acceptRejectConnection);
 router.post("/start-stop-service", authentication,  trainerController.startStopService);
 router.post("/otp-verfication", authentication,  trainerController.otpVerification);
+router.post("/save-fcm-token", authentication, trainerController.saveFcmToken);
+
 
 
 //1 Accept enquiry api, 
