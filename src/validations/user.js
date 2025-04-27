@@ -66,6 +66,39 @@ module.exports = {
                 then: Joi.string().valid("self", "other").required(),
                 otherwise: Joi.forbidden(),
             }),
+            address: Joi.when("service_booking_step", {
+                is: 1,
+                then: Joi.string().required(),
+                otherwise: Joi.forbidden(),
+              }),
+              landmark: Joi.when("service_booking_step", {
+                is: 1,
+                then: Joi.string().required(),
+                otherwise: Joi.forbidden(),
+              }),
+          
+              area: Joi.when("service_booking_step", {
+                is: 1,
+                then: Joi.string().required(),
+                otherwise: Joi.forbidden(),
+              }),
+              pincode: Joi.when("service_booking_step", {
+                is: 1,
+                then: Joi.string().required(),
+                otherwise: Joi.forbidden(),
+              }),
+          
+              //  name and contact_number only required when "training_needed_for" is "other"
+              name: Joi.when("training_needed_for", {
+                is: "other",
+                then: Joi.string().required(),
+                otherwise: Joi.forbidden(),
+              }),
+              contact_number: Joi.when("training_needed_for", {
+                is: "other",
+                then: Joi.string().required(),
+                otherwise: Joi.forbidden(),
+              }),
 
             // training_needed_for: Joi.when("service_booking_step", {
             //     is: 4,

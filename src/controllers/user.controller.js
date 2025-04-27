@@ -147,7 +147,7 @@ module.exports.createOrUpdateServiceBooking = async (req, res) => {
         .json({ message: "Step 1 must be completed first." });
     }
 
-    let serviceBookingsData = await service_bookings.create({
+    let payload = {
       user_id,
       service_type: req.body.service_type,
       booking_name: req.body.booking_name,
@@ -161,7 +161,30 @@ module.exports.createOrUpdateServiceBooking = async (req, res) => {
       service_booking_step: "1",
       trainer_type: req.body.trainer_type,
       training_needed_for: req.body.training_needed_for,
-    });
+      address: req.body.address,
+      landmark: req.body.landmark,
+      area : req.body.area,
+      pincode : req.body.pincode,
+    };
+    
+    
+    // Conditionally add area and pincode if training_needed_for is "other"
+    if (req.body.training_needed_for === "other") {
+      payload.name = req.body.name;
+      payload.contact_number = req.body.contact_number;
+    }else{
+      let userData = await Users.findOne({
+        where: {id:user_id},
+      });
+      console.log("userdata",userData);
+      if(!userData){
+         return ReE(res,"User Data Not found")
+      }
+      payload.contact_number = userData.mobile;
+
+    }
+    
+    let serviceBookingsData = await service_bookings.create(payload);
 
     //1. After this write the payment code.
     //2. Take the above service id and update it with latest payment table entry.

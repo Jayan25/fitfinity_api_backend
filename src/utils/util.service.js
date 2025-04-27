@@ -351,30 +351,35 @@ module.exports.createAndSendEnquiry = async function (userDetail, service_bookin
         });
 
         //  Send notification
-        if (trainerUser?.fcm_token) {
-        
-          await admin.messaging().send({
-            notification: {
-              title: "New Enquiry Nearby!",
-              body: `${userDetail.name} is looking for training help near you.`,
-             
-            },
-            android: {
-              notification: {
-                sound: "fitring",
-                channelId: "custom-sound-channel", 
-              },
-            },
-            apns: {
-              payload: {
-                aps: {
-                  sound: "fitring.wav", //  for iOS
-                },
-              },
-            },
-            token: trainerUser.fcm_token,
-          });
-        }
+       //  Send notification
+if (trainerUser?.fcm_token) {
+  try {
+    await admin.messaging().send({
+      notification: {
+        title: "New Enquiry Nearby!",
+        body: `${userDetail.name} is looking for training help near you.`,
+      },
+      android: {
+        notification: {
+          sound: "fitring",
+          channelId: "custom-sound-channel",
+        },
+      },
+      apns: {
+        payload: {
+          aps: {
+            sound: "fitring.wav",
+          },
+        },
+      },
+      token: trainerUser.fcm_token,
+    });
+  } catch (notificationError) {
+    console.error(`Failed to send notification to trainer id ${trainer.id}:`, notificationError.message);
+    // Continue to next trainer even if this one fails
+  }
+}
+
       }
 
       // Save connection data
