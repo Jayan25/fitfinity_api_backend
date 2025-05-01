@@ -97,15 +97,30 @@ module.exports.genereateDynamicPaymentLink = async (
       throw new Error("Service detail not found, try again!");
     }
     console.log("fiding serive detail using findConnection111111111111",serviceBookingsData)
-    // to find the price based on experience
-    // 
-    // 
-    // 
-    // 
-    // 
-    // 
+    let priceAcordingToTrainerExperience=0;
+    switch(serviceBookingsData?.trainer_type){
+      case "basic":
+        priceAcordingToTrainerExperience=7500;
+        console.log("priceAcordingToTrainerExperience=7500",priceAcordingToTrainerExperience);
+        
+        break;
+        case "standard":
+          priceAcordingToTrainerExperience=10328;
+          console.log("priceAcordingToTrainerExperience=10328",priceAcordingToTrainerExperience);
+          break;
+          case "premium":
+            priceAcordingToTrainerExperience=12160;
+            console.log("priceAcordingToTrainerExperience=12160",priceAcordingToTrainerExperience);
+          break;
+          case "couple/group":
+            priceAcordingToTrainerExperience=13989;
+            console.log("priceAcordingToTrainerExperience=13989",priceAcordingToTrainerExperience);
+          break;
+          default: console.log("trainer type not found")
+    }
+  
     const order =await razorpay.orders.create({
-      amount:100*100,
+      amount:priceAcordingToTrainerExperience*100,
       currency: "INR",
       receipt: `receipt_${Date.now()}`,
       payment_capture: 1,
