@@ -1,7 +1,8 @@
 const nodemailer = require("nodemailer");
-const { Users, Trainers ,connection_data} = require("../models/index");
+const { Users, Trainers, connection_data } = require("../models/index");
 const dotenv = require("dotenv");
-const admin = require('../../firebase');
+const admin = require("../../firebase");
+const { Op } = require("sequelize");
 dotenv.config();
 
 module.exports.ReE = async function (res, err, code) {
@@ -18,7 +19,6 @@ module.exports.ReS = async function (res, msg, data) {
 
   return res.json(send_data);
 };
-
 
 let transporter = nodemailer.createTransport({
   host: "smtp.gmail.com",
@@ -127,7 +127,6 @@ async function sendAdminNoTrainerFoundEmail(user) {
   await transporter.sendMail(mailOptions);
 }
 
-
 module.exports.sendOtp = async function (emailData) {
   const receiver = {
     from: process.env.EMAIL,
@@ -146,8 +145,7 @@ module.exports.sendOtp = async function (emailData) {
     `,
   };
 
-  console.log("receiver====",receiver);
-  
+  console.log("receiver====", receiver);
 
   transporter.sendMail(receiver, (error, emailResponse) => {
     if (error) {
@@ -159,13 +157,12 @@ module.exports.sendOtp = async function (emailData) {
   });
 };
 
-
-module.exports.sendPaymentLink=async function(emailData){
-    const receiver = {
-      from: process.env.EMAIL,
-      to: emailData.email,
-      subject: `Payment Confirmation for Your Next Training Session`,
-      html: `
+module.exports.sendPaymentLink = async function (emailData) {
+  const receiver = {
+    from: process.env.EMAIL,
+    to: emailData.email,
+    subject: `Payment Confirmation for Your Next Training Session`,
+    html: `
         <p>Dear ${emailData.name},</p>
   
         <p>Thank you for booking your next <strong>${emailData.sessionType}</strong> session with <strong>${emailData.trainerName}</strong>!</p>
@@ -179,20 +176,19 @@ module.exports.sendPaymentLink=async function(emailData){
         <p>Best regards</p>
         <p><strong>Team Fitfinity Trainer</strong></p>
       `,
-    };
-  
-    console.log("receiver====", receiver);
-  
-    transporter.sendMail(receiver, (error, emailResponse) => {
-      if (error) {
-        console.log("Email sent failed!!", error);
-        return;
-      }
-  
-      console.log("Email Sent success!");
-    });
-  
-}
+  };
+
+  console.log("receiver====", receiver);
+
+  transporter.sendMail(receiver, (error, emailResponse) => {
+    if (error) {
+      console.log("Email sent failed!!", error);
+      return;
+    }
+
+    console.log("Email Sent success!");
+  });
+};
 //<p>Please review the reason above and resubmit your documents at your earliest convenience by logging into your account portal.</p>
 
 // New function: send KYC rejection email template
@@ -204,7 +200,7 @@ module.exports.sendKycRejectionEmail = async function (emailData) {
     html: `
       <p>Dear ${emailData.name},</p>
       <p>We regret to inform you that your KYC verification for <strong>Fitfinity Trainer</strong> has been <strong>rejected</strong>.</p>
-      <p><strong>Reason:</strong> ${emailData.reject_reason || 'Not specified'}</p>
+      <p><strong>Reason:</strong> ${emailData.reject_reason || "Not specified"}</p>
       <p>Please review the reason above and contact to our support team.</p>
       <p>If you have any questions or need assistance, feel free to reach out to our support team at <a href="mailto:fitfinitytrainer@gmail.com">fitfinitytrainer@gmail.com</a>.</p>
       <p>Best regards,</p>
@@ -295,29 +291,55 @@ function calculateDistance(lat1, lon1, lat2, lon2) {
 //       }
 //     }
 //     if (nearbyTrainers.length >= 0) {
-      
+
 //       let data=await connection_data.bulkCreate(bulkUpdloadData)
-      
+
 //     }
-//     return 
+//     return
 //   } catch (error) {
 //     console.error("Error in createAndSendEnquiry:", error.message);
 //     throw new Error("Something went wrong while sending enquiry");
 //   }
 // };
 
-
-module.exports.createAndSendEnquiry = async function (userDetail, service_booking_id) {
+module.exports.createAndSendEnquiry = async function (
+  userDetail,
+  service_booking_id,
+  requiredTrainerEx
+) {
   try {
+    let endTrainerEx = 2;
+
+    switch (requiredTrainerEx) {
+      case "basic":
+        break;
+      case "standard":
+        endTrainerEx = 6;
+        break;
+      case "premium":
+        endTrainerEx = 25;
+        break;
+      case "couple/group":
+        endTrainerEx = 6;
+        break;
+
+      default:
+        console.log("Invalid experience.");
+    }
+
     const trainerList = await Trainers.findAll({
       where: {
         kyc_status: "done",
         block_status: "Unblocked",
+        experience: {
+          [Op.lte]: endTrainerEx, 
+        },
       },
       attributes: ["id", "email", "name", "lat", "lon"],
     });
 
     const nearbyTrainers = [];
+
 
     for (let trainer of trainerList) {
       if (trainer.lat && trainer.lon && userDetail.lat && userDetail.lon) {
@@ -351,35 +373,37 @@ module.exports.createAndSendEnquiry = async function (userDetail, service_bookin
         });
 
         //  Send notification
-       //  Send notification
-if (trainerUser?.fcm_token) {
-  try {
-    await admin.messaging().send({
-      notification: {
-        title: "New Enquiry Nearby!",
-        body: `${userDetail.name} is looking for training help near you.`,
-      },
-      android: {
-        notification: {
-          sound: "fitring",
-          channelId: "custom-sound-channel",
-        },
-      },
-      apns: {
-        payload: {
-          aps: {
-            sound: "fitring.wav",
-          },
-        },
-      },
-      token: trainerUser.fcm_token,
-    });
-  } catch (notificationError) {
-    console.error(`Failed to send notification to trainer id ${trainer.id}:`, notificationError.message);
-    // Continue to next trainer even if this one fails
-  }
-}
-
+        //  Send notification
+        if (trainerUser?.fcm_token) {
+          try {
+            await admin.messaging().send({
+              notification: {
+                title: "New Enquiry Nearby!",
+                body: `${userDetail.name} is looking for training help near you.`,
+              },
+              android: {
+                notification: {
+                  sound: "fitring",
+                  channelId: "custom-sound-channel",
+                },
+              },
+              apns: {
+                payload: {
+                  aps: {
+                    sound: "fitring.wav",
+                  },
+                },
+              },
+              token: trainerUser.fcm_token,
+            });
+          } catch (notificationError) {
+            console.error(
+              `Failed to send notification to trainer id ${trainer.id}:`,
+              notificationError.message
+            );
+            // Continue to next trainer even if this one fails
+          }
+        }
       }
 
       // Save connection data

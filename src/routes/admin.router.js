@@ -19,14 +19,20 @@ router.patch("/verify-kyc-step-trainer/:id",authentication,validate(admin.verify
 
 
 //user
-router.get("/user-list",authentication, validate(admin.userListValidation), adminController.getAllUsers);
+router.get("/user-list",authentication, adminController.getAllUsers);
+router.get("/userDetail/:id",authentication, adminController.getUsersDetail);
 
 //enquiry
-router.get("/natal-enquiry",authentication, validate(admin.userListValidation), adminController.getAllNatalEnquiry);
-router.get("/corporate-enquiry",authentication, validate(admin.userListValidation), adminController.getAllCorporateEnquiry);
-router.get("/fitness-payment",authentication, validate(admin.userListValidation), adminController.getAllFitnessgPayment);
-router.get("/yoga-payment",authentication, validate(admin.userListValidation), adminController.getAllYogaPayment);
-router.get("/diet-payment",authentication, validate(admin.userListValidation), adminController.getAlldietPlanPayment);
+router.get("/natal-enquiry",authentication,  adminController.getAllNatalEnquiry);
+router.get("/corporate-enquiry",authentication,  adminController.getAllCorporateEnquiry);
+router.get("/fitness-payment",authentication,  adminController.getAllFitnessgPayment);
+router.get("/yoga-payment",authentication, adminController.getAllYogaPayment);
+router.get("/diet-payment",authentication,  adminController.getAlldietPlanPayment);
+
+// manully connect the trainer with user
+router.get("/trainer-to-connect",authentication,  adminController.trainerToConnect);
+
+
 
 module.exports = router;
 

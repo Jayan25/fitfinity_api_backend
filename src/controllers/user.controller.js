@@ -24,15 +24,13 @@ module.exports.SignUp = async function (req, res) {
     // send user detail like singin
     // const otp = Math.floor(1000 + Math.random() * 9000);
     const hashedPassword = await bcrypt.hash(password, 10);
-    console.log("hashedPassword========",hashedPassword);
-    
+
     // Create a new trainer instance using Sequelize
-    console.log("trainers:::::::::::::", Users);
     const newUser = await Users.create({
       name: fullname,
       email,
       mobile,
-      password:hashedPassword,
+      password: hashedPassword,
       // otp,
       // email_verified_at:new Date(),
     });
@@ -56,7 +54,7 @@ module.exports.SignUp = async function (req, res) {
     // );
     let token = generateToken(users);
 
-    return ReS(res, "Registration successful! OTP sent to your email.", {
+    return ReS(res, "Registration successful!", {
       user,
       authorisation: { token, type: "bearer" },
     });
@@ -70,14 +68,12 @@ module.exports.hashExistingPasswords = async function (req, res) {
   try {
     // Fetch all users
     const users = await Trainers.findAll();
-    
+
     for (const user of users) {
       // Check if the password is already hashed
-      if (!user.password.startsWith("$2b$")) { 
+      if (!user.password.startsWith("$2b$")) {
         const hashedPassword = await bcrypt.hash(user.password, 10);
-        console.log("hashedPassword=========",user.password,user.id);
-        
-        
+
         // Update user password
         await Trainers.update(
           { password: hashedPassword },
@@ -93,22 +89,16 @@ module.exports.hashExistingPasswords = async function (req, res) {
   }
 };
 
-
 module.exports.userLogin = async function (req, res) {
   try {
     const { email, password } = req.body;
 
     const users = await Users.findOne({ where: { email } });
-    console.log("users:::::::::::::::::", users);
     if (!users) {
       return ReE(res, "Email not found.", 400);
     }
-    console.log("hashedPassword========",users.password);
 
     const isMatch = await bcrypt.compare(password, users.password);
-    console.log("============password==",password)
-    console.log("============users.password==",users.password)
-    console.log("==============",isMatch)
     if (!isMatch) {
       return ReE(res, "Incorrect password.", 400);
     }
@@ -132,10 +122,8 @@ module.exports.userLogin = async function (req, res) {
 
 module.exports.createOrUpdateServiceBooking = async (req, res) => {
   try {
-    console.log("============================", req.user);
     const user_id = req.user.id;
     const { service_booking_step } = req.body;
-    console.log("ServiceBooking================", service_bookings);
 
     let booking = await service_bookings.findOne({
       where: { user_id, payment_status: "pending" },
@@ -163,27 +151,24 @@ module.exports.createOrUpdateServiceBooking = async (req, res) => {
       training_needed_for: req.body.training_needed_for,
       address: req.body.address,
       landmark: req.body.landmark,
-      area : req.body.area,
-      pincode : req.body.pincode,
+      area: req.body.area,
+      pincode: req.body.pincode,
     };
-    
-    
+
     // Conditionally add area and pincode if training_needed_for is "other"
     if (req.body.training_needed_for === "other") {
       payload.name = req.body.name;
       payload.contact_number = req.body.contact_number;
-    }else{
+    } else {
       let userData = await Users.findOne({
-        where: {id:user_id},
+        where: { id: user_id },
       });
-      console.log("userdata",userData);
-      if(!userData){
-         return ReE(res,"User Data Not found")
+      if (!userData) {
+        return ReE(res, "User Data Not found");
       }
       payload.contact_number = userData.mobile;
-
     }
-    
+
     let serviceBookingsData = await service_bookings.create(payload);
 
     //1. After this write the payment code.
@@ -196,15 +181,15 @@ module.exports.createOrUpdateServiceBooking = async (req, res) => {
       serviceBookingsData.id
     );
 
-    let userDetail = await Users.findOne({
-      where: {
-        id: user_id,
-      },
-      attributes: ["id", "email", "name", "lat", "lon"],
-    });
+    // let userDetail = await Users.findOne({
+    //   where: {
+    //     id: user_id,
+    //   },
+    //   attributes: ["id", "email", "name", "lat", "lon"],
+    // });
 
     // code to send email to all the matched trainer in 10 KM radius
-    await createAndSendEnquiry(userDetail, serviceBookingsData.id);
+    // await createAndSendEnquiry(userDetail, serviceBookingsData.id);
     return res.status(200).json({
       message: `Booking data updated successfully`,
       response: { ...serviceBookingsData, paymentResponse },
@@ -228,7 +213,6 @@ module.exports.latlonUpdation = async function (req, res) {
     if (!userDetail) {
       return ReE(res, "User not found!", 400);
     }
-    console.log("userDetail===================", userDetail);
     let dataData = {
       lat,
       lon,
@@ -253,7 +237,6 @@ module.exports.natalEnquiry = async function (req, res) {
       enquiry_for: "natal",
     };
     let a = await enquiry.create(dataData);
-    console.log("a=================================================", a);
 
     return ReS(res, "Enquiry submitted");
   } catch (error) {
@@ -415,8 +398,6 @@ module.exports.dietTransaction = async function (req, res) {
 
 module.exports.ongoingEnquiry = async (req, res) => {
   try {
-    console.log("i am hereeeeeeeee", req.user);
-    console.log("i am hereeeeeeeeconnection_datae", connection_data);
 
     let allReceivedConnectionList = await connection_data.findAndCountAll({
       where: {
@@ -464,151 +445,157 @@ module.exports.razorpayWebhook = async (req, res) => {
       .digest("hex");
 
     if (signature === expectedSignature) {
-      console.log(" stater[[[[[[[[[[[[[[[[[[]]]]]]]]]]]]]]]]]]====", req.body);
-      console.log(
-        " notessssss=========",
-        req.body.payload.payment.entity.notes
-      );
       switch (req.body.event) {
         case "payment.authorized":
-          console.log("ℹ️ Payment authorized:", paymentEntity.id);
+          console.log("ℹ️ Payment authorized:");
           break;
 
-          case "payment.captured":
-            console.log(" notessssss========11111");
+        case "payment.captured":
 
-        if (req.body.payload.payment.entity.notes.trail === true) {
-          console.log(" notessssss========12222222222221");
-          let service_booking_id =
-            req.body.payload.payment.entity.notes.service_booking_id;
+          if (req.body.payload.payment.entity.notes.trail === true) {
+            let service_booking_id =
+              req.body.payload.payment.entity.notes.service_booking_id;
 
-          let paymentDetail = await Payment.findOne({
-            where: {
-              service_booking_id,
-              service_type: req.body.payload.payment.entity.notes.service_type,
-              amount: 99,
-            },
-          });
-
-          if (!paymentDetail) {
-            throw new Error("Payment detail not found!");
-          }
-
-          await Payment.update(
-            {
-              status: "success",
-            },
-            {
-              where: {
-                id: paymentDetail.id,
-              },
-            }
-          );
-
-          console.log(" notessssss========12222233333");
-          await service_bookings.update(
-            {
-              trial_taken: true,
-              trainer_id: paymentDetail.trainer_id,
-            },
-            {
+            let paymentDetail = await Payment.findOne({
               where: {
                 service_booking_id,
+                service_type:
+                  req.body.payload.payment.entity.notes.service_type,
+                amount: 99,
               },
-            }
-          );
-        } else {
-          // there will be two condition
-          // 1. payment after taile which is service
-          //2. payment of diet plan
+            });
 
-          // if service id is present means, it is for service of type trainer or yoga
-          //else is s payment for diet
-          if (req.body.payload.payment.entity.notes.service_booking_id) {
-            let amount = parseInt(req.body.payload.payment.entity.amount / 100);
+            if (!paymentDetail) {
+              throw new Error("Payment detail not found!");
+            }
+
+
             await Payment.update(
               {
                 status: "success",
               },
               {
                 where: {
-                  service_booking_id:
-                    req.body.payload.payment.entity.notes.service_booking_id,
-                  service_type:
-                    req.body.payload.payment.entity.notes.service_type,
-                  amount: { [Op.gt]: 99 },
+                  id: paymentDetail.id,
                 },
               }
             );
 
             await service_bookings.update(
               {
-                service_taken: true,
+                trial_taken: true,
+                trainer_id: paymentDetail.trainer_id,
               },
               {
                 where: {
-                  service_booking_id:
-                    req.body.payload.payment.entity.notes.service_booking_id,
+                  id:service_booking_id,
                 },
               }
             );
+
+            let requiredTrainerExperience = await service_bookings.findOne({
+              where: {
+                id:service_booking_id,
+                
+              },
+            })
+
+            let requiredTrainerEx=requiredTrainerExperience.trainer_type;
+            let userDetail = await Users.findOne({
+
+              where: {
+                id: paymentDetail.user_id,
+              },
+              attributes: ["id", "email", "name", "lat", "lon"],
+            });
+
+            await createAndSendEnquiry(userDetail, service_booking_id,requiredTrainerEx);
           } else {
-            await Payment.update(
-              {
-                status: "success",
-              },
-              {
-                where: {
-                  diet_plan_id:
-                    req.body.payload.payment.entity.notes.diet_plan_id,
+            // there will be two condition
+            // 1. payment after taile which is service
+            //2. payment of diet plan
+
+            // if service id is present means, it is for service of type trainer or yoga
+            //else is s payment for diet
+            if (req.body.payload.payment.entity.notes.service_booking_id) {
+              let amount = parseInt(
+                req.body.payload.payment.entity.amount / 100
+              );
+              await Payment.update(
+                {
+                  status: "success",
                 },
-              }
-            );
+                {
+                  where: {
+                    service_booking_id:
+                      req.body.payload.payment.entity.notes.service_booking_id,
+                    service_type:
+                      req.body.payload.payment.entity.notes.service_type,
+                    amount: { [Op.gt]: 99 },
+                  },
+                }
+              );
+
+              await service_bookings.update(
+                {
+                  service_taken: true,
+                },
+                {
+                  where: {
+                    id:
+                      req.body.payload.payment.entity.notes.service_booking_id,
+                  },
+                }
+              );
+            } else {
+              await Payment.update(
+                {
+                  status: "success",
+                },
+                {
+                  where: {
+                    diet_plan_id:
+                      req.body.payload.payment.entity.notes.diet_plan_id,
+                  },
+                }
+              );
+            }
           }
-          console.log(" notessssss========14444444443");
-          console.log(" notessssss========5555543");
+          break;
 
-          console.log("4444444444449999999999999999");
-
-        }
-        break;
-
-        
         case "payment.failed":
-          console.log("payment failed==========>>>>>>>>", req.body.payload.payment.entity.notes);
-          console.log(" notessssss========12222222222221");
+         
 
           // condition for trail payment fail for trainer or yoga
           if (req.body.payload.payment.entity.notes.trail === true) {
             let service_booking_id =
-            req.body.payload.payment.entity.notes.service_booking_id;
+              req.body.payload.payment.entity.notes.service_booking_id;
 
-          let paymentDetail = await Payment.findOne({
-            where: {
-              service_booking_id,
-              service_type: req.body.payload.payment.entity.notes.service_type,
-              amount: 99,
-            },
-          });
-
-          if (!paymentDetail) {
-            throw new Error("Payment detail not found!");
-          }
-
-          console.log(" notessssss========12222233333",paymentDetail);
-          await Payment.update(
-            {
-              status: "failed",
-            },
-            {
+            let paymentDetail = await Payment.findOne({
               where: {
-                id: paymentDetail.id,
+                service_booking_id,
+                service_type:
+                  req.body.payload.payment.entity.notes.service_type,
+                amount: 99,
               },
-            }
-          );
+            });
 
-          }else{
-            // condition for diet plan or trainer or yoga full payment faile 
+            if (!paymentDetail) {
+              throw new Error("Payment detail not found!");
+            }
+
+            await Payment.update(
+              {
+                status: "failed",
+              },
+              {
+                where: {
+                  id: paymentDetail.id,
+                },
+              }
+            );
+          } else {
+            // condition for diet plan or trainer or yoga full payment faile
             if (req.body.payload.payment.entity.notes.service_booking_id) {
               await Payment.update(
                 {
@@ -624,7 +611,6 @@ module.exports.razorpayWebhook = async (req, res) => {
                   },
                 }
               );
-  
             } else {
               await Payment.update(
                 {
@@ -638,12 +624,11 @@ module.exports.razorpayWebhook = async (req, res) => {
                 }
               );
             }
-
           }
-         
+
           break;
         default:
-          console.log("Found nothing:")
+          console.log("Found nothing:");
       }
 
       return res
@@ -661,18 +646,13 @@ module.exports.razorpayWebhook = async (req, res) => {
   }
 };
 
-module.exports.new=(req,res)=>{
-try{
+module.exports.new = (req, res) => {
+  try {
+    console.log("body", req.body);
 
-
-  console.log(
-    "body",req.body
-  );
-
-  return ReS(res,"Success")
-  
-}catch(error){
-  console.log(error)
-  ReE(res,"Failed")
-}
-}
+    return ReS(res, "Success");
+  } catch (error) {
+    console.log(error);
+    ReE(res, "Failed");
+  }
+};

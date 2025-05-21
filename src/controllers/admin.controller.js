@@ -13,6 +13,7 @@ const { generateToken } = require("../utils/jwtUtils");
 const { off } = require("../../app");
 const { Op } = require("sequelize");
 const bcrypt = require("bcryptjs");
+const moment = require("moment");
 
 module.exports.login = async function (req, res) {
   try {
@@ -22,8 +23,6 @@ module.exports.login = async function (req, res) {
         email,
       },
     });
-    console.log(findTrainer);
-    console.log(password);
     if (!findTrainer) {
       return ReE(res, "Trainer not found!", 400);
     }
@@ -47,7 +46,7 @@ module.exports.login = async function (req, res) {
 
 module.exports.getAllTrainers = async function (req, res) {
   try {
-    let { limit, offset, search, kyc_status, block_status } = req.query;
+    let { limit, offset, search, kyc_status, block_status,service_type } = req.query;
 
     limit = isNaN(Number(limit)) ? 10 : Number(limit);
     offset = isNaN(Number(offset)) ? 0 : Number(offset);
@@ -62,6 +61,10 @@ module.exports.getAllTrainers = async function (req, res) {
     }
     if (block_status) {
       where.block_status = block_status;
+    }
+
+    if (service_type && service_type !=="all") {
+      where.service_type = service_type;  //Fitness Trainer,Yoga Trainer, all
     }
 
 
@@ -178,7 +181,6 @@ module.exports.updateDocument = async function (req, res) {
     //   { where: { id } }
     // );
 
-    console.log("id=======", id);
     let where = {
       id: id,
     };
@@ -191,7 +193,6 @@ module.exports.updateDocument = async function (req, res) {
       }
     );
 
-    console.log("data===========", data);
 
     return ReS(res, "Trainer documnet status updated!");
   } catch (error) {
@@ -281,6 +282,61 @@ module.exports.getAllUsers = async function (req, res) {
       offset,
       order: [["created_at", "DESC"]],
       attributes: { exclude: ["password"] },
+      include: [
+        {
+          model: Payment,
+          as: "payments",
+          required: false,
+          include: [
+            {
+              model: service_bookings,
+              as: "service_booking",
+              required: false,
+            },{
+              model: Trainers,
+              as: "trainer",
+              required: false,
+            }
+          ],
+        }
+      ],
+      distinct: true,
+    });
+    return ReS(res, "User list fetched", userList);
+  } catch (error) {
+    console.error("Error fetching Users:", error);
+    return ReE(res, "An error occurred while fetching trainers", 500);
+  }
+};
+
+module.exports.getUsersDetail = async function (req, res) {
+  try {
+    let { id } = req.params;
+
+    const userList = await Users.findOne({
+      where:{
+        id
+      },
+      order: [["created_at", "DESC"]],
+      attributes: { exclude: ["password"] },
+      include: [
+        {
+          model: Payment,
+          as: "payments",
+          required: false,
+          include: [
+            {
+              model: service_bookings,
+              as: "service_booking",
+              required: false,
+            },{
+              model: Trainers,
+              as: "trainer",
+              required: false,
+            }
+          ],
+        }
+      ],
       distinct: true,
     });
     return ReS(res, "User list fetched", userList);
@@ -350,10 +406,12 @@ module.exports.getAllCorporateEnquiry = async function (req, res) {
 };
 module.exports.getAllFitnessgPayment = async function (req, res) {
   try {
-    let { limit, offset, search } = req.query;
+    let { limit, offset, search, filterType, startDate, endDate } = req.query;
 
     limit = isNaN(Number(limit)) ? 10 : Number(limit);
     offset = isNaN(Number(offset)) ? 0 : Number(offset);
+
+    // User search filter
     const userFilter = search
       ? {
           name: {
@@ -362,15 +420,55 @@ module.exports.getAllFitnessgPayment = async function (req, res) {
         }
       : {};
 
+    // Date range based on filterType
+    const bookingFilter = {
+      service_type: "fitness",
+    };
+    if (filterType) {
+      let start, end;
+
+      switch (filterType) {
+        case "today":
+          start = moment().startOf("day").toDate();
+          end = moment().endOf("day").toDate();
+          break;
+        case "weekly":
+          start = moment().startOf("week").toDate();
+          end = moment().endOf("week").toDate();
+          break;
+        case "monthly":
+          start = moment().startOf("month").toDate();
+          end = moment().endOf("month").toDate();
+          break;
+        case "yearly":
+          start = moment().startOf("year").toDate();
+          end = moment().endOf("year").toDate();
+          break;
+        case "custom":
+         if (startDate && endDate) {
+    start = moment(startDate).startOf("day").toDate();
+    end = moment(endDate).endOf("day").toDate();
+  } else {
+    return ReE(res, "Custom filter requires startDate and endDate", 400);
+  }
+          break;
+        default:
+          return ReE(res, "Invalid filterType value", 400);
+      }
+
+      bookingFilter.created_at = {
+        [Op.between]: [start, end]
+      };
+    }
+
     const payments = await Payment.findAndCountAll({
       include: [
         {
           model: service_bookings,
           as: "service_booking",
           required: true,
-          where: {
-            service_type: "fitness",
-          },
+          where: bookingFilter,
+
           attributes: [
             "id",
             "booking_name",
@@ -408,7 +506,10 @@ module.exports.getAllFitnessgPayment = async function (req, res) {
       offset,
     });
 
-    return ReS(res, "Fitness Payments fetched", payments);
+   const totalAmount = payments.rows.reduce((sum, item) => {
+  return sum + Number(item.amount || 0);
+}, 0);
+    return ReS(res, "Fitness Payments fetched", {...payments,totalAmount});
   } catch (error) {
     console.error("Error fetching Fitness Payments:", error);
     return ReE(res, "An error occurred while fetching Fitness Payments", 500);
@@ -417,11 +518,10 @@ module.exports.getAllFitnessgPayment = async function (req, res) {
 
 module.exports.getAllYogaPayment = async function (req, res) {
   try {
-    let { limit, offset, search } = req.query;
-    limit = isNaN(Number(limit)) ? 10 : Number(limit); // ✅ fix here
+    let { limit, offset, search, filterType, startDate, endDate } = req.query;
+    limit = isNaN(Number(limit)) ? 10 : Number(limit);
     offset = isNaN(Number(offset)) ? 0 : Number(offset);
 
-    // Search filter by user name
     const userFilter = search
       ? {
           name: {
@@ -430,15 +530,56 @@ module.exports.getAllYogaPayment = async function (req, res) {
         }
       : {};
 
+     const bookingFilter = {
+      service_type: "fitness",
+    };
+    if (filterType) {
+      let start, end;
+
+      switch (filterType) {
+        case "today":
+          start = moment().startOf("day").toDate();
+          end = moment().endOf("day").toDate();
+          break;
+        case "weekly":
+          start = moment().startOf("week").toDate();
+          end = moment().endOf("week").toDate();
+          break;
+        case "monthly":
+          start = moment().startOf("month").toDate();
+          end = moment().endOf("month").toDate();
+          break;
+        case "yearly":
+          start = moment().startOf("year").toDate();
+          end = moment().endOf("year").toDate();
+          break;
+        case "custom":
+           if (startDate && endDate) {
+    start = moment(startDate).startOf("day").toDate();
+    end = moment(endDate).endOf("day").toDate();
+  } else {
+    return ReE(res, "Custom filter requires startDate and endDate", 400);
+  }
+          break;
+        default:
+          return ReE(res, "Invalid filterType value", 400);
+      }
+
+      bookingFilter.created_at = {
+        [Op.between]: [start, end]
+      };
+    }
+
+    
+    
     const payments = await Payment.findAndCountAll({
+      
       include: [
         {
           model: service_bookings,
           as: "service_booking",
           required: true,
-          where: {
-            service_type: "yoga",
-          },
+          where: bookingFilter,
           attributes: [
             "id",
             "booking_name",
@@ -475,8 +616,11 @@ module.exports.getAllYogaPayment = async function (req, res) {
       limit,
       offset,
     });
+       const totalAmount = payments.rows.reduce((sum, item) => {
+  return sum + Number(item.amount || 0);
+}, 0);
 
-    return ReS(res, "Yoga Payments fetched", payments);
+    return ReS(res, "Yoga Payments fetched", {...payments,totalAmount});
   } catch (error) {
     console.error("Error fetching Yoga Payments:", error);
     return ReE(res, "An error occurred while fetching Yoga Payments", 500);
@@ -485,7 +629,7 @@ module.exports.getAllYogaPayment = async function (req, res) {
 
 module.exports.getAlldietPlanPayment = async function (req, res) {
   try {
-    let { limit, offset, search } = req.query;
+    let { limit, offset, search ,filterType, startDate, endDate} = req.query;
     limit = isNaN(Number(limit)) ? 10 : Number(limit);
     offset = isNaN(Number(offset)) ? 0 : Number(offset);
     let where = search
@@ -496,6 +640,44 @@ module.exports.getAlldietPlanPayment = async function (req, res) {
         }
       : {};
 
+      
+ // Add date filter to same 'where' object
+    if (filterType) {
+      let start, end;
+
+      switch (filterType) {
+        case "today":
+          start = moment().startOf("day").toDate();
+          end = moment().endOf("day").toDate();
+          break;
+        case "weekly":
+          start = moment().startOf("week").toDate();
+          end = moment().endOf("week").toDate();
+          break;
+        case "monthly":
+          start = moment().startOf("month").toDate();
+          end = moment().endOf("month").toDate();
+          break;
+        case "yearly":
+          start = moment().startOf("year").toDate();
+          end = moment().endOf("year").toDate();
+          break;
+        case "custom":
+          if (startDate && endDate) {
+            start = moment(startDate).startOf("day").toDate();
+            end = moment(endDate).endOf("day").toDate();
+          } else {
+            return ReE(res, "Custom filter requires startDate and endDate", 400);
+          }
+          break;
+        default:
+          return ReE(res, "Invalid filterType value", 400);
+      }
+
+      where.created_at = {
+        [Op.between]: [start, end],
+      };
+    }
     const serviceBookingList = await diet_plan.findAndCountAll({
       where,
       limit,
@@ -510,9 +692,49 @@ module.exports.getAlldietPlanPayment = async function (req, res) {
       ],
     });
 
-    return ReS(res, "Diet Payment feteched", serviceBookingList);
+    const totalAmount = serviceBookingList.rows.reduce((sum, item) => {
+  return sum + Number(item.price || 0);
+}, 0);
+
+    return ReS(res, "Diet Payment feteched", { ...serviceBookingList,
+  totalAmount});
   } catch (error) {
     console.error("Error fetching Users:", error);
     return ReE(res, "An error occurred while fetching Diet Payment", 500);
   }
 };
+
+  module.exports.trainerToConnect = async function (req, res) {
+    try {
+      let { limit, offset, search,service_type } = req.query;
+  
+      limit = isNaN(Number(limit)) ? 10 : Number(limit);
+      offset = isNaN(Number(offset)) ? 0 : Number(offset);
+  
+      let where = {
+        kyc_status :"done"
+      };
+      if (search) {
+        where.name = { [Op.like]: `${search}%` };
+      }
+     
+  
+      if (service_type && service_type !=="all") {
+        where.service_type = service_type;  //Fitness Trainer,Yoga Trainer, all
+      }
+  
+  
+      const trainers = await Trainers.findAndCountAll({
+        where: where,
+        limit,
+        offset,
+        order: [["created_at", "DESC"]],
+        distinct: true,
+      });
+  
+      return ReS(res, "Trainers list fetched", trainers);
+    } catch (error) {
+      console.error("Error fetching trainers:", error);
+      return ReE(res, "An error occurred while fetching trainers", 500);
+    }
+  };

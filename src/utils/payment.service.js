@@ -67,7 +67,6 @@ module.exports.createOrder = async (service_type, user_id, price, from, id) => {
       diet_plan_id,
       currency: "INR",
     });
-    console.log("paymanredata=====", paymanredata);
 
     let data = {
       amount,
@@ -96,25 +95,20 @@ module.exports.genereateDynamicPaymentLink = async (
     {
       throw new Error("Service detail not found, try again!");
     }
-    console.log("fiding serive detail using findConnection111111111111",serviceBookingsData)
     let priceAcordingToTrainerExperience=0;
     switch(serviceBookingsData?.trainer_type){
       case "basic":
         priceAcordingToTrainerExperience=7500;
-        console.log("priceAcordingToTrainerExperience=7500",priceAcordingToTrainerExperience);
-        
+
         break;
         case "standard":
           priceAcordingToTrainerExperience=10328;
-          console.log("priceAcordingToTrainerExperience=10328",priceAcordingToTrainerExperience);
           break;
           case "premium":
             priceAcordingToTrainerExperience=12160;
-            console.log("priceAcordingToTrainerExperience=12160",priceAcordingToTrainerExperience);
-          break;
+            break;
           case "couple/group":
             priceAcordingToTrainerExperience=13989;
-            console.log("priceAcordingToTrainerExperience=13989",priceAcordingToTrainerExperience);
           break;
           default: console.log("trainer type not found")
     }
@@ -130,7 +124,6 @@ module.exports.genereateDynamicPaymentLink = async (
         trail:false
       },
     });
-    console.log("order=====",order);
     let paymanredata = await Payment.create({
         user_id: userDetail.id,
         order_id: order.id,
@@ -141,10 +134,8 @@ module.exports.genereateDynamicPaymentLink = async (
         currency: "INR"
       });
 
-    console.log("order=========", paymanredata);
 
     const paymentLink = `https://y9lm3v.csb.app/pay?order_id=${order.id}`;
-    console.log("paymentLink====", paymentLink);
     return paymentLink;
   } catch (error) {
     console.error(error);

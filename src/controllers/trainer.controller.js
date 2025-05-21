@@ -41,7 +41,6 @@ module.exports.SignUp = async function (req, res) {
       return ReE(res, "Email alreay exist, try with another one", 400);
     }
     const hashedPassword = await bcrypt.hash(password, 10);
-    console.log("service_type==============", service_type);
     const newUser = await Trainers.create({
       name,
       email,
@@ -83,16 +82,13 @@ module.exports.kyc = async function (req, res) {
     } = req.body;
     let { id } = req.user;
 
-    console.log("=========================================", req.body);
 
     let where = {
       id: id,
     };
-    console.log("where:::::::::::::::", where);
     let isInstructorActive = await Trainers.findOne({
       where,
     });
-    console.log("isInstructorActive::::::::::", isInstructorActive);
     if (!isInstructorActive) {
       return ReE(res, "Instructor not found!");
     }
@@ -119,7 +115,6 @@ module.exports.kyc = async function (req, res) {
         }
       );
     } else {
-      console.log("TrainerDocument=============", TrainerDocument);
       let findDocumentExist = await TrainerDocument.findOne({
         where: {
           trainer_id: id,
@@ -129,7 +124,6 @@ module.exports.kyc = async function (req, res) {
       if (findDocumentExist) {
         return ReE(res, "Documents already added", 400);
       }
-      console.log("====================", req.body);
       const dataToUpdate = req.body?.documents?.map((item) => ({
         trainer_id: id,
         document_type: item.name,
@@ -143,7 +137,6 @@ module.exports.kyc = async function (req, res) {
       //   document_url: `https://fitfinitybucket.s3.ap-south-1.amazonaws.com/` + item.url,
       //   verification_status: 'pending'
       // }));
-      console.log("dataToUpdate==========================", dataToUpdate);
       await TrainerDocument.bulkCreate(dataToUpdate);
       await Trainers.update(
         {
@@ -199,7 +192,6 @@ module.exports.trainerStatus = async function (req, res) {
         id: id,
       },
     });
-    console.log("findTrainer====================", findTrainer);
 
     if (!findTrainer) {
       return ReE(res, "Trainer not found!", 400);
@@ -230,7 +222,6 @@ module.exports.latlonUpdation = async function (req, res) {
     if (!findTrainer) {
       return ReE(res, "Trainer not found!", 400);
     }
-    console.log("findTrainer===================", findTrainer);
     let dataData = {
       lat,
       lon,
@@ -266,7 +257,6 @@ module.exports.profileData = async function (req, res) {
       return ReE(res, "Trainer not found!", 400);
     }
     let response = JSON.parse(JSON.stringify(findTrainer));
-    console.log(response);
     delete response.otp;
     delete response.password;
     delete response.created_at;
@@ -356,8 +346,6 @@ module.exports.enquiry = async (req, res) => {
       })
     );
   } catch (error) {
-    console.log("error--------------",error);
-    
     return res.status(500).json({ message: "Enquiry fetching error:", error });
   }
 };
@@ -402,8 +390,6 @@ module.exports.acceptRejectConnection = async (req, res) => {
     let { connection_id, action } = req.body;
     let status = action === "accept" ? 1 : 2;
 
-    console.log("connection_id,action}========", connection_id, action);
-    console.log("connection_id,actionstatusstatus}========", status);
 
     let findConnection = await connection_data.findOne({
       where: {

@@ -16,7 +16,6 @@ module.exports.version = async function (req, res) {
 
   module.exports.helpAndSupport = async function (req, res) {
     try {
-      console.log("i am here");
       
       const { user_id, trainer_id, userType,query } = req.body;
   
@@ -26,7 +25,6 @@ module.exports.version = async function (req, res) {
           message: "userType and query are required fields",
         });
       }
-      console.log("HelpSupport=================",HelpSupport)
       const helpEntry = await HelpSupport.create({
         user_id: user_id || null,
         trainer_id: trainer_id || null,

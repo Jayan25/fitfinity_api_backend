@@ -42,7 +42,7 @@ module.exports = {
             }),
             experience: Joi.when("kyc_step", {
                 is: 1,
-                then: Joi.string().required(),
+                then: Joi.number().required(),
                 otherwise: Joi.optional(""),
             }),
             bank_name: Joi.when("kyc_step", {
