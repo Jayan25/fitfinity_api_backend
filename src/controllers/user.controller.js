@@ -461,7 +461,7 @@ module.exports.razorpayWebhook = async (req, res) => {
                 service_booking_id,
                 service_type:
                   req.body.payload.payment.entity.notes.service_type,
-                amount: 99,
+                amount: 1,
               },
             });
 
@@ -509,6 +509,7 @@ module.exports.razorpayWebhook = async (req, res) => {
               attributes: ["id", "email", "name", "lat", "lon"],
             });
 
+            console.log("just befoer===========================")
             await createAndSendEnquiry(userDetail, service_booking_id,requiredTrainerEx);
           } else {
             // there will be two condition

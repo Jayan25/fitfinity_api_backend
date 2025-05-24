@@ -327,6 +327,8 @@ module.exports.createAndSendEnquiry = async function (
         console.log("Invalid experience.");
     }
 
+    console.log("endTrainerEx=============================",endTrainerEx)
+
     const trainerList = await Trainers.findAll({
       where: {
         kyc_status: "done",
@@ -339,6 +341,8 @@ module.exports.createAndSendEnquiry = async function (
     });
 
     const nearbyTrainers = [];
+
+    console.log("trainerList===========",trainerList.length)
 
 
     for (let trainer of trainerList) {
@@ -356,6 +360,8 @@ module.exports.createAndSendEnquiry = async function (
     }
 
     let bulkUpdloadData = [];
+
+    console.log("trainerList=======================",nearbyTrainers)
 
     if (nearbyTrainers.length > 0) {
       for (let trainer of nearbyTrainers) {
@@ -405,6 +411,8 @@ module.exports.createAndSendEnquiry = async function (
           }
         }
       }
+
+      console.log("bulkUpdloadData===========",bulkUpdloadData)
 
       // Save connection data
       await connection_data.bulkCreate(bulkUpdloadData);
