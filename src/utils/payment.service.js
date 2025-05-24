@@ -19,13 +19,21 @@ const razorpay = new Razorpay({
 });
 
 const SERVICE_PRICES = {
-  fitness: 99,
-  yoga: 99,
+  fitness: 1,
+  yoga: 1,
   weight_loss_trainer: 6000,
   kickboxing_trainer: 4500,
   mma_trainer: 7000,
   cardio_trainer: 5500,
 };
+// const SERVICE_PRICES = {
+//   fitness: 99,
+//   yoga: 99,
+//   weight_loss_trainer: 6000,
+//   kickboxing_trainer: 4500,
+//   mma_trainer: 7000,
+//   cardio_trainer: 5500,
+// };
 
 module.exports.createOrder = async (service_type, user_id, price, from, id) => {
   try {

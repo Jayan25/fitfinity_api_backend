@@ -42,7 +42,6 @@ app.use("/", function (_, res) {
 });
 
 app.use((err, _req, res, _) => {
-  console.log("I a insideeeeeeeeeeeeeeeeeeeeeeeeeeeee", err)
   if (err instanceof ValidationError) {
     if (err.details && err.details.body && err.details.body.length && err.details.body[0].message) {
       return res.status(err.statusCode).json({
