@@ -12,7 +12,7 @@ const authentication = (req, res, next) => {
     if (!token) {
         return res.status(403).json({ message: 'Access denied' });
     }
-
+    console.log("token===========",token)
     try {
         const decoded = jwt.verify(token, JWT_SECRET);
         req.user = decoded; 
