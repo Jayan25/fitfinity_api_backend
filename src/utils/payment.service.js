@@ -106,7 +106,7 @@ module.exports.genereateDynamicPaymentLink = async (
     let priceAcordingToTrainerExperience=0;
     switch(serviceBookingsData?.trainer_type){
       case "basic":
-        priceAcordingToTrainerExperience=7500;
+        priceAcordingToTrainerExperience=1;
 
         break;
         case "standard":

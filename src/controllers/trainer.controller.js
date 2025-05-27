@@ -524,7 +524,7 @@ module.exports.otpVerification = async (req, res) => {
     let findConnection = await connection_data.findOne({
       where: {
         id: connection_id,
-        status: 1,
+        status: 3,
         otp,
       },
     });

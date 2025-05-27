@@ -313,6 +313,7 @@ module.exports.createAndSendEnquiry = async function (
 
     switch (requiredTrainerEx) {
       case "basic":
+         endTrainerEx = 30;
         break;
       case "standard":
         endTrainerEx = 6;
@@ -321,7 +322,7 @@ module.exports.createAndSendEnquiry = async function (
         endTrainerEx = 25;
         break;
       case "couple/group":
-        endTrainerEx = 6;
+        endTrainerEx = 25;
         break;
 
       default:
