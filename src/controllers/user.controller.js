@@ -444,6 +444,10 @@ module.exports.razorpayWebhook = async (req, res) => {
       .update(body)
       .digest("hex");
 
+
+
+      console.log("Just before the webhook===================")
+      console.log("Just before the webhook======body=============",body)
     if (signature === expectedSignature) {
       switch (req.body.event) {
         case "payment.authorized":
@@ -451,6 +455,9 @@ module.exports.razorpayWebhook = async (req, res) => {
           break;
 
         case "payment.captured":
+
+          console.log("payment.captured===================",  req.body.payload.payment.entity.notes.service_booking_id)
+       
 
           if (req.body.payload.payment.entity.notes.trail === true) {
             let service_booking_id =
@@ -465,10 +472,14 @@ module.exports.razorpayWebhook = async (req, res) => {
               },
             });
 
+               console.log("payment.captured=================== 100000")
+
             if (!paymentDetail) {
               throw new Error("Payment detail not found!");
             }
 
+
+            console.log("payment.captured=================== 200000")
 
             await Payment.update(
               {
@@ -480,6 +491,8 @@ module.exports.razorpayWebhook = async (req, res) => {
                 },
               }
             );
+
+            console.log("payment.captured=================== 300000")
 
             await service_bookings.update(
               {
@@ -493,6 +506,8 @@ module.exports.razorpayWebhook = async (req, res) => {
               }
             );
 
+            console.log("payment.captured=================== 400000")
+
             let requiredTrainerExperience = await service_bookings.findOne({
               where: {
                 id:service_booking_id,
@@ -500,6 +515,8 @@ module.exports.razorpayWebhook = async (req, res) => {
               },
             })
 
+
+            console.log("payment.captured=================== 600000")
             let requiredTrainerEx=requiredTrainerExperience.trainer_type;
             let userDetail = await Users.findOne({
 

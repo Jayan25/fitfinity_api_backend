@@ -309,6 +309,7 @@ module.exports.createAndSendEnquiry = async function (
 ) {
   try {
     let endTrainerEx = 2;
+    console.log("payment.captured=================== 700000")
 
     switch (requiredTrainerEx) {
       case "basic":
@@ -342,7 +343,7 @@ module.exports.createAndSendEnquiry = async function (
 
     const nearbyTrainers = [];
 
-    console.log("trainerList===========",trainerList.length)
+    console.log("trainerList=========------==",trainerList.length)
 
 
     for (let trainer of trainerList) {
