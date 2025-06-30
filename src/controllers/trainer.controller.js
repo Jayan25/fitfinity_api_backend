@@ -4,14 +4,15 @@ const {
   Versions,
   connection_data,
   Users,
-  service_bookings
+  Payment,
+  service_bookings,
 } = require("../models/index");
 const { ReE, ReS, sendEmail, sendOtp } = require("../utils/util.service");
 const { genereateDynamicPaymentLink } = require("../utils/payment.service");
 const jwt = require("jsonwebtoken");
 const { generateToken } = require("../utils/jwtUtils");
 const { generateOrderSignedUploadUrl } = require("../utils/aws.service");
-const {sendPaymentLink}=require("../utils/util.service")
+const { sendPaymentLink } = require("../utils/util.service");
 const bcrypt = require("bcryptjs");
 const { Op } = require("sequelize");
 // const Razorpay = require("razorpay");
@@ -45,7 +46,7 @@ module.exports.SignUp = async function (req, res) {
       name,
       email,
       phone,
-      password:hashedPassword,
+      password: hashedPassword,
       otp,
       gender,
       service_type,
@@ -81,7 +82,6 @@ module.exports.kyc = async function (req, res) {
       account_holder_name,
     } = req.body;
     let { id } = req.user;
-
 
     let where = {
       id: id,
@@ -304,13 +304,48 @@ module.exports.generateSignedUrl = async function (req, res) {
 
 module.exports.transaction = async (req, res) => {
   try {
+
+    console.log("payments==========",req.user)
+    const payments = await Payment.findAndCountAll({
+      where: {
+        trainer_id: req.user.id,
+      },
+      include: [
+        {
+          model: service_bookings,
+          as: "service_booking",
+          required: true,
+          attributes: [
+            "id",
+            "booking_name",
+            "preferred_time_to_be_served",
+            "training_for",
+            "trial_date",
+            "trial_time",
+            "trainer_type",
+            "training_needed_for",
+            "payment_status",
+            "service_booking_step",
+            "created_at",
+          ],
+        },
+      ],
+      attributes: [
+        "id",
+        "order_id",
+        "payment_id",
+        "amount",
+        "status",
+        "created_at",
+      ],
+      order: [["created_at", "DESC"]],
+    });
+
+    console.log("payments===========",payments[0])
     return ReS(
       res,
       "Transaction Fetched success!",
-      (response = {
-        count: 0,
-        data: [],
-      })
+      payments
     );
   } catch (error) {
     console.error("Service Booking Error:", error);
@@ -324,22 +359,22 @@ module.exports.enquiry = async (req, res) => {
         trainer_id: req.user.id,
         status: 0,
       },
-       include: [
+      include: [
         {
           model: Users,
           as: "user",
-          attributes: ["id", "name", "email", "mobile","address","image"],
+          attributes: ["id", "name", "email", "mobile", "address", "image"],
         },
         {
-              model: service_bookings,
-              as: "service_booking",
-              required: true,
+          model: service_bookings,
+          as: "service_booking",
+          required: true,
         },
       ],
     });
 
     return ReS(
-      res,  
+      res,
       "Enquiry Fetched success!",
       (response = {
         allReceivedConnectionList,
@@ -360,13 +395,13 @@ module.exports.ongoingEnquiry = async (req, res) => {
         {
           model: Users,
           as: "user",
-          attributes: ["id", "name", "email", "mobile","address","image"],
+          attributes: ["id", "name", "email", "mobile", "address", "image"],
         },
         {
           model: service_bookings,
           as: "service_booking",
           required: true,
-    },
+        },
       ],
     });
 
@@ -389,7 +424,6 @@ module.exports.acceptRejectConnection = async (req, res) => {
   try {
     let { connection_id, action } = req.body;
     let status = action === "accept" ? 1 : 2;
-
 
     let findConnection = await connection_data.findOne({
       where: {
@@ -464,55 +498,56 @@ module.exports.startStopService = async (req, res) => {
           status: 1,
         },
       });
-      let serviceBookingsData= await service_bookings.findOne({
-        where:{
-            id:findConnection.service_booking_id
-        }
-    })
+      let serviceBookingsData = await service_bookings.findOne({
+        where: {
+          id: findConnection.service_booking_id,
+        },
+      });
 
       if (!findConnection) {
         return ReE(res, "You are not connected with user!");
       }
 
-      if(!findConnection?.otp)
-      {
-        return ReE(res,"You need to start the session first")
+      if (!findConnection?.otp) {
+        return ReE(res, "You need to start the session first");
       }
 
-      let userDetail=await Users.findOne({
-        where:{
-          id:findConnection.user_id
-        }
-      })
+      let userDetail = await Users.findOne({
+        where: {
+          id: findConnection.user_id,
+        },
+      });
 
-    
+      if (!userDetail) {
+        return ReE(res, "User detail not found");
+      }
+      let trainerDetail = await Trainers.findOne({
+        where: {
+          id: findConnection.trainer_id,
+        },
+      });
+      if (!trainerDetail) {
+        return ReE(res, "Trainer detail not found");
+      }
 
-      if(!userDetail){
-        return ReE(res,"User detail not found")
-      }
-      let trainerDetail=await Trainers.findOne({
-        where:{
-          id:findConnection.trainer_id
-        }
-      })
-      if(!trainerDetail){
-        return ReE(res,"Trainer detail not found")
-      }
-   
-      let paymentLink=await genereateDynamicPaymentLink(findConnection,userDetail,trainerDetail)
+      let paymentLink = await genereateDynamicPaymentLink(
+        findConnection,
+        userDetail,
+        trainerDetail
+      );
       let emailData = {
         email: userDetail.email,
         name: userDetail.name,
-        service_type:serviceBookingsData.service_type,
-        paymentLink
+        service_type: serviceBookingsData.service_type,
+        paymentLink,
       };
-      await sendPaymentLink(emailData)
-      message="payment link is sent on registerd email"
+      await sendPaymentLink(emailData);
+      message = "payment link is sent on registerd email";
     }
 
     return ReS(res, message);
   } catch (error) {
-    console.error( error);
+    console.error(error);
     return res
       .status(500)
       .json({ message: "ongoing Enquiry fetching error", error });
@@ -528,22 +563,23 @@ module.exports.otpVerification = async (req, res) => {
         otp,
       },
     });
-    
+
     if (!findConnection) {
       return ReE(res, "Otp is not correct!");
     }
-    
-     await connection_data.update(
+
+    await connection_data.update(
       {
-        opt_verification:1
+        opt_verification: 1,
       },
       {
-      where: {
-        id: connection_id,
-        status: 1,
-        otp,
-      },
-    });
+        where: {
+          id: connection_id,
+          status: 1,
+          otp,
+        },
+      }
+    );
     return ReS(res, "Otp is verified");
   } catch (error) {
     console.error("ongoing Enquiry fetching error:", error);
@@ -552,8 +588,6 @@ module.exports.otpVerification = async (req, res) => {
       .json({ message: "ongoing Enquiry fetching error", error });
   }
 };
-
-
 
 module.exports.saveFcmToken = async function (req, res) {
   try {
@@ -578,7 +612,6 @@ module.exports.saveFcmToken = async function (req, res) {
     return ReE(res, "Something went wrong");
   }
 };
-
 
 // const razorpay = new Razorpay({
 //   key_id: process.env.RAZORPAY_KEY_ID,

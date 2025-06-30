@@ -530,7 +530,7 @@ module.exports.razorpayWebhook = async (req, res) => {
             await createAndSendEnquiry(userDetail, service_booking_id,requiredTrainerEx);
           } else {
             // there will be two condition
-            // 1. payment after taile which is service
+            // 1. payment after tail which is service
             //2. payment of diet plan
 
             // if service id is present means, it is for service of type trainer or yoga

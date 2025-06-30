@@ -22,7 +22,7 @@ router.get("/profile-detail", authentication, trainerController.profileData);
 
 router.post("/generate-signed-url",  trainerController.generateSignedUrl);
 router.post("/version",  trainerController.generateSignedUrl);
-router.get("/trainer-transaction", authentication,  trainerController.transaction);
+router.get("/transaction", authentication,  trainerController.transaction);
 router.get("/enquiry", authentication,  trainerController.enquiry);
 router.get("/ongoing-enquiry", authentication,  trainerController.ongoingEnquiry);
 router.post("/helpAndSupport", validate(common.helpAndSuppoprt), commonController.helpAndSupport);
