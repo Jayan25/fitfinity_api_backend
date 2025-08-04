@@ -7,7 +7,7 @@ const {
   Payment,
   connection_data,
 } = require("../models/index");
-const { ReE, ReS, createAndSendEnquiry } = require("../utils/util.service");
+const { ReE, ReS, createAndSendEnquiry,sendOtp,resetPasswordOtp } = require("../utils/util.service");
 const { createOrder } = require("../utils/payment.service");
 const jwt = require("jsonwebtoken");
 const { generateToken } = require("../utils/jwtUtils");
@@ -674,3 +674,63 @@ module.exports.new = (req, res) => {
     ReE(res, "Failed");
   }
 };
+
+module.exports.requestPasswordReset = async function (req, res) {
+  try {
+    const { email } = req.body;
+    if (!email) return ReE(res, "Email is required.");
+
+    const user = await Users.findOne({ where: { email } });
+    if (!user) return ReE(res, "User with this email does not exist.");
+
+    // Generate a 6-digit OTP (numeric)
+    const otp = Math.floor(100000 + Math.random() * 900000).toString();
+
+    // Save OTP to user model (password_reset_otp)
+    await Users.update(
+      { password_reset_otp: otp },
+      { where: { email } }
+    );
+
+    
+    await resetPasswordOtp({
+      email,
+      otp,
+      name: user.name || "User",
+    });
+
+    return ReS(res, "Password reset OTP sent to your email.");
+  } catch (error) {
+    console.error(error);
+    return ReE(res, "Error requesting password reset. Please try again.");
+  }
+};
+
+module.exports.resetPassword = async function (req, res) {
+  try {
+    const { email, otp, newPassword } = req.body;
+
+    if (!email || !otp || !newPassword) {
+      return ReE(res, "Email, OTP, and new password are required.");
+    }
+
+    const user = await Users.findOne({ where: { email } });
+
+    if (!user) return ReE(res, "User not found.");
+    if (user.password_reset_otp !== otp) return ReE(res, "Invalid OTP.");
+
+    // Hash the new password
+    const hashedPassword = await bcrypt.hash(newPassword, 10);
+
+    // Update password and clear the OTP
+    await Users.update(
+      { password: hashedPassword, password_reset_otp: null },
+      { where: { email } }
+    );
+
+    return ReS(res, "Password has been reset successfully.");
+  } catch (error) {
+    console.error(error);
+    return ReE(res, "Error resetting password. Please try again.");
+  }
+}

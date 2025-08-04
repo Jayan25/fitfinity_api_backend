@@ -7,14 +7,14 @@ const {
   Payment,
   service_bookings,
 } = require("../models/index");
-const { ReE, ReS, sendEmail, sendOtp } = require("../utils/util.service");
+const { ReE, ReS, sendEmail, sendOtp,resetPasswordOtp } = require("../utils/util.service");
 const { genereateDynamicPaymentLink } = require("../utils/payment.service");
 const jwt = require("jsonwebtoken");
 const { generateToken } = require("../utils/jwtUtils");
 const { generateOrderSignedUploadUrl } = require("../utils/aws.service");
 const { sendPaymentLink } = require("../utils/util.service");
 const bcrypt = require("bcryptjs");
-const { Op } = require("sequelize");
+const { Op, where } = require("sequelize");
 // const Razorpay = require("razorpay");
 // const crypto = require("crypto");
 const dotenv = require("dotenv");
@@ -306,6 +306,11 @@ module.exports.transaction = async (req, res) => {
   try {
 
     console.log("payments==========",req.user)
+    let a=await Payment.findAndCountAll({
+      where:{
+        trainer_id: req.user.id,
+      }
+    })
     const payments = await Payment.findAndCountAll({
       where: {
         trainer_id: req.user.id,
@@ -612,6 +617,67 @@ module.exports.saveFcmToken = async function (req, res) {
     return ReE(res, "Something went wrong");
   }
 };
+
+module.exports.requestPasswordReset = async function (req, res) {
+  try {
+    const { email } = req.body;
+    if (!email) return ReE(res, "Email is required.");
+
+    const user = await Trainers.findOne({ where: { email } });
+    if (!user) return ReE(res, "Trainer with this email does not exist.");
+
+    // Generate a 6-digit OTP (numeric)
+    const otp = Math.floor(100000 + Math.random() * 900000).toString();
+
+    // Save OTP to user model (password_reset_otp)
+    await Trainers.update(
+      { password_reset_otp: otp },
+      { where: { email } }
+    );
+
+    // Send the OTP via email (reuse your sendOtp utility)
+    await resetPasswordOtp({
+      email,
+      otp,
+      name: user.name || "Trainer",
+    });
+
+    return ReS(res, "Password reset OTP sent to your email.");
+  } catch (error) {
+    console.error(error);
+    return ReE(res, "Error requesting password reset. Please try again.");
+  }
+};
+
+module.exports.resetPassword = async function (req, res) {
+  try {
+    const { email, otp, newPassword } = req.body;
+
+    if (!email || !otp || !newPassword) {
+      return ReE(res, "Email, OTP, and new password are required.");
+    }
+
+    const user = await Trainers.findOne({ where: { email } });
+
+    if (!user) return ReE(res, "Trainer not found.");
+    if (user.password_reset_otp !== otp) return ReE(res, "Invalid OTP.");
+
+    // Hash the new password
+    const hashedPassword = await bcrypt.hash(newPassword, 10);
+
+    // Update password and clear the OTP
+    await Trainers.update(
+      { password: hashedPassword, password_reset_otp: null },
+      { where: { email } }
+    );
+
+    return ReS(res, "Password has been reset successfully.");
+  } catch (error) {
+    console.error(error);
+    return ReE(res, "Error resetting password. Please try again.");
+  }
+}
+
 
 // const razorpay = new Razorpay({
 //   key_id: process.env.RAZORPAY_KEY_ID,

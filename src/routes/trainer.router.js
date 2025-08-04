@@ -31,6 +31,10 @@ router.post("/start-stop-service", authentication,  trainerController.startStopS
 router.post("/otp-verfication", authentication,  trainerController.otpVerification);
 router.post("/save-fcm-token", authentication, trainerController.saveFcmToken);
 
+// reset password
+router.post("/request-password-reset", trainerController.requestPasswordReset);
+router.post("/reset-password", trainerController.resetPassword);
+
 
 
 //1 Accept enquiry api, 

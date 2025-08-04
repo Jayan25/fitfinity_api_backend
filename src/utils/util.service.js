@@ -426,3 +426,34 @@ module.exports.createAndSendEnquiry = async function (
     throw new Error("Something went wrong while sending enquiry");
   }
 };
+
+
+module.exports.resetPasswordOtp = async function (emailData) {
+  const receiver = {
+    from: process.env.EMAIL,
+    to: emailData.email,
+    subject: `Otp for password reset`,
+    html: `
+      <p>Dear ${emailData.name},</p>
+
+      
+      <p> Use this ${emailData.otp} OTP in you fitinity app to rest the password </p>
+
+      <p>For security reasons, do not share it with anyone.<p>
+
+      <p>Best regards,</p>
+      <p><strong>Team Fitfinity Trainer</strong></p>
+    `,
+  };
+
+  console.log("receiver====", receiver);
+
+  transporter.sendMail(receiver, (error, emailResponse) => {
+    if (error) {
+      console.log("Email sent failed!!", error);
+      return;
+    }
+
+    console.log("Email Sent success!");
+  });
+};

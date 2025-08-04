@@ -25,4 +25,9 @@ router.get("/ongoing-enquiry", authentication,  userController.ongoingEnquiry);
 router.post("/razorpay-webhook", userController.razorpayWebhook);
 router.post("/new", userController.new);
 
+
+// reset password
+router.post("/request-password-reset", userController.requestPasswordReset);
+router.post("/reset-password", userController.resetPassword);
+
 module.exports = router;

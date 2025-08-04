@@ -1,6 +1,6 @@
 const jwt = require("jsonwebtoken");
 
-'use strict';
+("use strict");
 
 module.exports = (sequelize, DataTypes) => {
   const Users = sequelize.define(
@@ -44,9 +44,9 @@ module.exports = (sequelize, DataTypes) => {
         allowNull: true,
       },
       type: {
-        type: DataTypes.ENUM('A', 'U', 'T'),
+        type: DataTypes.ENUM("A", "U", "T"),
         allowNull: false,
-        defaultValue: 'U',
+        defaultValue: "U",
       },
       ref_id: {
         type: DataTypes.INTEGER,
@@ -91,13 +91,17 @@ module.exports = (sequelize, DataTypes) => {
         allowNull: true,
         defaultValue: null,
       },
+      password_reset_otp: {
+        type: DataTypes.STRING(6),
+        allowNull: true,
+        unique: true,
+      },
     },
     {
       timestamps: true,
       createdAt: "created_at",
       updatedAt: "updated_at",
       tableName: "users",
-
     }
   );
   Users.associate = (models) => {
@@ -105,19 +109,18 @@ module.exports = (sequelize, DataTypes) => {
       foreignKey: "user_id",
       as: "payments",
     });
-  
+
     Users.hasMany(models.service_bookings, {
       foreignKey: "user_id",
       as: "service_bookings",
-      constraints: false, 
+      constraints: false,
     });
     Users.hasMany(models.connection_data, {
       foreignKey: "user_id",
       as: "connection_data",
-      constraints: false, 
+      constraints: false,
     });
   };
 
   return Users;
 };
-
