@@ -8,7 +8,12 @@ const {
   diet_plan,
   Payment,
 } = require("../models/index");
-const { ReE, ReS, sendEmail, sendKycRejectionEmail } = require("../utils/util.service");
+const {
+  ReE,
+  ReS,
+  sendEmail,
+  sendKycRejectionEmail,
+} = require("../utils/util.service");
 const { generateToken } = require("../utils/jwtUtils");
 const { off } = require("../../app");
 const { Op } = require("sequelize");
@@ -27,8 +32,7 @@ module.exports.login = async function (req, res) {
       return ReE(res, "Trainer not found!", 400);
     }
 
-
-     const isMatch = await bcrypt.compare(password, findTrainer.password);
+    const isMatch = await bcrypt.compare(password, findTrainer.password);
     if (!isMatch) {
       return ReE(res, "Password is not correct!");
     }
@@ -46,7 +50,8 @@ module.exports.login = async function (req, res) {
 
 module.exports.getAllTrainers = async function (req, res) {
   try {
-    let { limit, offset, search, kyc_status, block_status,service_type } = req.query;
+    let { limit, offset, search, kyc_status, block_status, service_type } =
+      req.query;
 
     limit = isNaN(Number(limit)) ? 10 : Number(limit);
     offset = isNaN(Number(offset)) ? 0 : Number(offset);
@@ -57,16 +62,14 @@ module.exports.getAllTrainers = async function (req, res) {
     }
     if (kyc_status) {
       where.kyc_status = kyc_status;
-      
     }
     if (block_status) {
       where.block_status = block_status;
     }
 
-    if (service_type && service_type !=="all") {
-      where.service_type = service_type;  //Fitness Trainer,Yoga Trainer, all
+    if (service_type && service_type !== "all") {
+      where.service_type = service_type; //Fitness Trainer,Yoga Trainer, all
     }
-
 
     const trainers = await Trainers.findAndCountAll({
       where: where,
@@ -134,8 +137,22 @@ module.exports.deleteTrainer = async function (req, res) {
       return ReE(res, "Trainer not found", 404);
     }
 
-    await Trainers.update({ deleted_at: new Date() }, { where: { id } });
+    console.log("trainer===========", trainer);
+    console.log("new Date()===========", new Date());
+    console.log("id===========", id);
 
+   
+    await Trainers.destroy({
+      where: { id },
+      force: true  
+    });
+
+    await TrainerDocument.destroy({
+      where: {
+        trainer_id: id,
+      },
+    });
+    
     return ReS(res, "Trainer deleted successfully");
   } catch (error) {
     console.error("Error deleting admin:", error);
@@ -192,7 +209,6 @@ module.exports.updateDocument = async function (req, res) {
         where,
       }
     );
-
 
     return ReS(res, "Trainer documnet status updated!");
   } catch (error) {
@@ -292,13 +308,14 @@ module.exports.getAllUsers = async function (req, res) {
               model: service_bookings,
               as: "service_booking",
               required: false,
-            },{
+            },
+            {
               model: Trainers,
               as: "trainer",
               required: false,
-            }
+            },
           ],
-        }
+        },
       ],
       distinct: true,
     });
@@ -314,8 +331,8 @@ module.exports.getUsersDetail = async function (req, res) {
     let { id } = req.params;
 
     const userList = await Users.findOne({
-      where:{
-        id
+      where: {
+        id,
       },
       order: [["created_at", "DESC"]],
       attributes: { exclude: ["password"] },
@@ -329,13 +346,14 @@ module.exports.getUsersDetail = async function (req, res) {
               model: service_bookings,
               as: "service_booking",
               required: false,
-            },{
+            },
+            {
               model: Trainers,
               as: "trainer",
               required: false,
-            }
+            },
           ],
-        }
+        },
       ],
       distinct: true,
     });
@@ -445,19 +463,23 @@ module.exports.getAllFitnessgPayment = async function (req, res) {
           end = moment().endOf("year").toDate();
           break;
         case "custom":
-         if (startDate && endDate) {
-    start = moment(startDate).startOf("day").toDate();
-    end = moment(endDate).endOf("day").toDate();
-  } else {
-    return ReE(res, "Custom filter requires startDate and endDate", 400);
-  }
+          if (startDate && endDate) {
+            start = moment(startDate).startOf("day").toDate();
+            end = moment(endDate).endOf("day").toDate();
+          } else {
+            return ReE(
+              res,
+              "Custom filter requires startDate and endDate",
+              400
+            );
+          }
           break;
         default:
           return ReE(res, "Invalid filterType value", 400);
       }
 
       bookingFilter.created_at = {
-        [Op.between]: [start, end]
+        [Op.between]: [start, end],
       };
     }
 
@@ -506,10 +528,10 @@ module.exports.getAllFitnessgPayment = async function (req, res) {
       offset,
     });
 
-   const totalAmount = payments.rows.reduce((sum, item) => {
-  return sum + Number(item.amount || 0);
-}, 0);
-    return ReS(res, "Fitness Payments fetched", {...payments,totalAmount});
+    const totalAmount = payments.rows.reduce((sum, item) => {
+      return sum + Number(item.amount || 0);
+    }, 0);
+    return ReS(res, "Fitness Payments fetched", { ...payments, totalAmount });
   } catch (error) {
     console.error("Error fetching Fitness Payments:", error);
     return ReE(res, "An error occurred while fetching Fitness Payments", 500);
@@ -530,7 +552,7 @@ module.exports.getAllYogaPayment = async function (req, res) {
         }
       : {};
 
-     const bookingFilter = {
+    const bookingFilter = {
       service_type: "fitness",
     };
     if (filterType) {
@@ -554,26 +576,27 @@ module.exports.getAllYogaPayment = async function (req, res) {
           end = moment().endOf("year").toDate();
           break;
         case "custom":
-           if (startDate && endDate) {
-    start = moment(startDate).startOf("day").toDate();
-    end = moment(endDate).endOf("day").toDate();
-  } else {
-    return ReE(res, "Custom filter requires startDate and endDate", 400);
-  }
+          if (startDate && endDate) {
+            start = moment(startDate).startOf("day").toDate();
+            end = moment(endDate).endOf("day").toDate();
+          } else {
+            return ReE(
+              res,
+              "Custom filter requires startDate and endDate",
+              400
+            );
+          }
           break;
         default:
           return ReE(res, "Invalid filterType value", 400);
       }
 
       bookingFilter.created_at = {
-        [Op.between]: [start, end]
+        [Op.between]: [start, end],
       };
     }
 
-    
-    
     const payments = await Payment.findAndCountAll({
-      
       include: [
         {
           model: service_bookings,
@@ -616,11 +639,11 @@ module.exports.getAllYogaPayment = async function (req, res) {
       limit,
       offset,
     });
-       const totalAmount = payments.rows.reduce((sum, item) => {
-  return sum + Number(item.amount || 0);
-}, 0);
+    const totalAmount = payments.rows.reduce((sum, item) => {
+      return sum + Number(item.amount || 0);
+    }, 0);
 
-    return ReS(res, "Yoga Payments fetched", {...payments,totalAmount});
+    return ReS(res, "Yoga Payments fetched", { ...payments, totalAmount });
   } catch (error) {
     console.error("Error fetching Yoga Payments:", error);
     return ReE(res, "An error occurred while fetching Yoga Payments", 500);
@@ -629,7 +652,7 @@ module.exports.getAllYogaPayment = async function (req, res) {
 
 module.exports.getAlldietPlanPayment = async function (req, res) {
   try {
-    let { limit, offset, search ,filterType, startDate, endDate} = req.query;
+    let { limit, offset, search, filterType, startDate, endDate } = req.query;
     limit = isNaN(Number(limit)) ? 10 : Number(limit);
     offset = isNaN(Number(offset)) ? 0 : Number(offset);
     let where = search
@@ -640,8 +663,7 @@ module.exports.getAlldietPlanPayment = async function (req, res) {
         }
       : {};
 
-      
- // Add date filter to same 'where' object
+    // Add date filter to same 'where' object
     if (filterType) {
       let start, end;
 
@@ -667,7 +689,11 @@ module.exports.getAlldietPlanPayment = async function (req, res) {
             start = moment(startDate).startOf("day").toDate();
             end = moment(endDate).endOf("day").toDate();
           } else {
-            return ReE(res, "Custom filter requires startDate and endDate", 400);
+            return ReE(
+              res,
+              "Custom filter requires startDate and endDate",
+              400
+            );
           }
           break;
         default:
@@ -693,48 +719,48 @@ module.exports.getAlldietPlanPayment = async function (req, res) {
     });
 
     const totalAmount = serviceBookingList.rows.reduce((sum, item) => {
-  return sum + Number(item.price || 0);
-}, 0);
+      return sum + Number(item.price || 0);
+    }, 0);
 
-    return ReS(res, "Diet Payment feteched", { ...serviceBookingList,
-  totalAmount});
+    return ReS(res, "Diet Payment feteched", {
+      ...serviceBookingList,
+      totalAmount,
+    });
   } catch (error) {
     console.error("Error fetching Users:", error);
     return ReE(res, "An error occurred while fetching Diet Payment", 500);
   }
 };
 
-  module.exports.trainerToConnect = async function (req, res) {
-    try {
-      let { limit, offset, search,service_type } = req.query;
-  
-      limit = isNaN(Number(limit)) ? 10 : Number(limit);
-      offset = isNaN(Number(offset)) ? 0 : Number(offset);
-  
-      let where = {
-        kyc_status :"done"
-      };
-      if (search) {
-        where.name = { [Op.like]: `${search}%` };
-      }
-     
-  
-      if (service_type && service_type !=="all") {
-        where.service_type = service_type;  //Fitness Trainer,Yoga Trainer, all
-      }
-  
-  
-      const trainers = await Trainers.findAndCountAll({
-        where: where,
-        limit,
-        offset,
-        order: [["created_at", "DESC"]],
-        distinct: true,
-      });
-  
-      return ReS(res, "Trainers list fetched", trainers);
-    } catch (error) {
-      console.error("Error fetching trainers:", error);
-      return ReE(res, "An error occurred while fetching trainers", 500);
+module.exports.trainerToConnect = async function (req, res) {
+  try {
+    let { limit, offset, search, service_type } = req.query;
+
+    limit = isNaN(Number(limit)) ? 10 : Number(limit);
+    offset = isNaN(Number(offset)) ? 0 : Number(offset);
+
+    let where = {
+      kyc_status: "done",
+    };
+    if (search) {
+      where.name = { [Op.like]: `${search}%` };
     }
-  };
+
+    if (service_type && service_type !== "all") {
+      where.service_type = service_type; //Fitness Trainer,Yoga Trainer, all
+    }
+
+    const trainers = await Trainers.findAndCountAll({
+      where: where,
+      limit,
+      offset,
+      order: [["created_at", "DESC"]],
+      distinct: true,
+    });
+
+    return ReS(res, "Trainers list fetched", trainers);
+  } catch (error) {
+    console.error("Error fetching trainers:", error);
+    return ReE(res, "An error occurred while fetching trainers", 500);
+  }
+};
