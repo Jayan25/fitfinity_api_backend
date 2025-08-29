@@ -463,6 +463,7 @@ module.exports.startStopService = async (req, res) => {
     let { connection_id, action } = req.body;
     let message = "";
     if (action === "start") {
+    
       let findConnection = await connection_data.findOne({
         where: {
           id: connection_id,
@@ -475,6 +476,7 @@ module.exports.startStopService = async (req, res) => {
       }
 
       const otp = Math.floor(1000 + Math.random() * 9000);
+   
       await connection_data.update(
         { otp },
         {
@@ -493,21 +495,26 @@ module.exports.startStopService = async (req, res) => {
         otp: otp,
       };
 
+
+
       // email to send otp just before starting the service
       await sendOtp(emailData);
       message = "Otp is sent on registerd Email";
     } else {
+
       let findConnection = await connection_data.findOne({
         where: {
           id: connection_id,
           status: 1,
         },
       });
+
       let serviceBookingsData = await service_bookings.findOne({
         where: {
           id: findConnection.service_booking_id,
         },
       });
+
 
       if (!findConnection) {
         return ReE(res, "You are not connected with user!");
@@ -523,6 +530,7 @@ module.exports.startStopService = async (req, res) => {
         },
       });
 
+
       if (!userDetail) {
         return ReE(res, "User detail not found");
       }
@@ -531,6 +539,8 @@ module.exports.startStopService = async (req, res) => {
           id: findConnection.trainer_id,
         },
       });
+
+
       if (!trainerDetail) {
         return ReE(res, "Trainer detail not found");
       }
@@ -540,12 +550,15 @@ module.exports.startStopService = async (req, res) => {
         userDetail,
         trainerDetail
       );
+
+
       let emailData = {
         email: userDetail.email,
         name: userDetail.name,
         service_type: serviceBookingsData.service_type,
         paymentLink,
       };
+
       await sendPaymentLink(emailData);
       message = "payment link is sent on registerd email";
     }
@@ -560,16 +573,19 @@ module.exports.startStopService = async (req, res) => {
 };
 module.exports.otpVerification = async (req, res) => {
   try {
+
+
     let { connection_id, otp } = req.body;
     let findConnection = await connection_data.findOne({
       where: {
         id: connection_id,
-        status: 3,
+        status: 1,
         otp,
       },
     });
 
-    if (!findConnection) {
+ 
+    if (otp !=findConnection.otp) {
       return ReE(res, "Otp is not correct!");
     }
 
@@ -715,7 +731,7 @@ module.exports.resetPassword = async function (req, res) {
 //       order_id: order.id,
 //       amount,
 //       status: "pending",
-//     });
+//     });W
 
 //     return res.json({ success: true, order_id: order.id, amount });
 //   } catch (error) {

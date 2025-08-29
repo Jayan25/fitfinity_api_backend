@@ -344,7 +344,9 @@ module.exports.createAndSendEnquiry = async function (
 
     const nearbyTrainers = [];
 
+    console.log("trainerList detail=========------==",trainerList)
     console.log("trainerList=========------==",trainerList.length)
+    console.log("trainerList=========-----==",userDetail)
 
 
     for (let trainer of trainerList) {
@@ -355,6 +357,7 @@ module.exports.createAndSendEnquiry = async function (
           trainer.lat,
           trainer.lon
         );
+        console.log("distance===============",distance);
         if (distance <= RADIUS_KM) {
           nearbyTrainers.push(trainer);
         }

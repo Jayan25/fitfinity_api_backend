@@ -444,8 +444,6 @@ module.exports.razorpayWebhook = async (req, res) => {
       .update(body)
       .digest("hex");
 
-
-
       console.log("Just before the webhook===================")
       console.log("Just before the webhook======body=============",body)
     if (signature === expectedSignature) {
@@ -652,7 +650,8 @@ module.exports.razorpayWebhook = async (req, res) => {
       return res
         .status(200)
         .json({ success: true, message: "Webhook verified and processed" });
-    } else {
+    } 
+    else {
       console.log(" Signature mismatch");
       return res
         .status(400)
