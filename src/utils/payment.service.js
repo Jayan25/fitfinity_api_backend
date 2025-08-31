@@ -143,7 +143,7 @@ module.exports.genereateDynamicPaymentLink = async (
       });
 
 
-    const paymentLink = `https://www.fitfinitytrainer.com//pay?order_id=${order.id}`;
+    const paymentLink = `https://www.fitfinitytrainer.com/pay?order_id=${order.id}`;
     return paymentLink;
   } catch (error) {
     console.error(error);
