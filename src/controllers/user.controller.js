@@ -4,10 +4,11 @@ const {
   service_bookings,
   enquiry,
   diet_plan,
+  fitness_plan,     // <-- added
   Payment,
   connection_data,
 } = require("../models/index");
-const { ReE, ReS, createAndSendEnquiry,sendOtp,resetPasswordOtp } = require("../utils/util.service");
+const { ReE, ReS, createAndSendEnquiry, sendOtp, resetPasswordOtp } = require("../utils/util.service");
 const { createOrder } = require("../utils/payment.service");
 const jwt = require("jsonwebtoken");
 const { generateToken } = require("../utils/jwtUtils");
@@ -21,37 +22,19 @@ dotenv.config();
 module.exports.SignUp = async function (req, res) {
   try {
     const { fullname, email, mobile, password } = req.body;
-    // send user detail like singin
-    // const otp = Math.floor(1000 + Math.random() * 9000);
     const hashedPassword = await bcrypt.hash(password, 10);
 
-    // Create a new trainer instance using Sequelize
     const newUser = await Users.create({
       name: fullname,
       email,
       mobile,
       password: hashedPassword,
-      // otp,
-      // email_verified_at:new Date(),
     });
 
     const users = await Users.findOne({ where: { email } });
     let user = JSON.parse(JSON.stringify(users));
     delete user.password;
 
-    // let userData={
-    //   name,
-    //   lat,
-    //   lon
-    // }
-
-    // let distance=createAndSendEnquiry(userData);
-
-    // const token = jwt.sign(
-    //   { userId: newUser.id, email: newUser.email },
-    //   "your_jwt_secret",
-    //   { expiresIn: "30d" }
-    // );
     let token = generateToken(users);
 
     return ReS(res, "Registration successful!", {
@@ -66,15 +49,11 @@ module.exports.SignUp = async function (req, res) {
 
 module.exports.hashExistingPasswords = async function (req, res) {
   try {
-    // Fetch all users
     const users = await Trainers.findAll();
 
     for (const user of users) {
-      // Check if the password is already hashed
       if (!user.password.startsWith("$2b$")) {
         const hashedPassword = await bcrypt.hash(user.password, 10);
-
-        // Update user password
         await Trainers.update(
           { password: hashedPassword },
           { where: { id: user.id } }
@@ -155,7 +134,6 @@ module.exports.createOrUpdateServiceBooking = async (req, res) => {
       pincode: req.body.pincode,
     };
 
-    // Conditionally add area and pincode if training_needed_for is "other"
     if (req.body.training_needed_for === "other") {
       payload.name = req.body.name;
       payload.contact_number = req.body.contact_number;
@@ -171,8 +149,6 @@ module.exports.createOrUpdateServiceBooking = async (req, res) => {
 
     let serviceBookingsData = await service_bookings.create(payload);
 
-    //1. After this write the payment code.
-    //2. Take the above service id and update it with latest payment table entry.
     let paymentResponse = await createOrder(
       req.body.service_type,
       user_id,
@@ -181,15 +157,6 @@ module.exports.createOrUpdateServiceBooking = async (req, res) => {
       serviceBookingsData.id
     );
 
-    // let userDetail = await Users.findOne({
-    //   where: {
-    //     id: user_id,
-    //   },
-    //   attributes: ["id", "email", "name", "lat", "lon"],
-    // });
-
-    // code to send email to all the matched trainer in 10 KM radius
-    // await createAndSendEnquiry(userDetail, serviceBookingsData.id);
     return res.status(200).json({
       message: `Booking data updated successfully`,
       response: { ...serviceBookingsData, paymentResponse },
@@ -225,7 +192,8 @@ module.exports.latlonUpdation = async function (req, res) {
     return ReE(res, "Error while updating user lat and lon");
   }
 };
-module.exports.natalEnquiry = async function (req, res) {
+
+module.exports.natalEnquiry = async (req, res) => {
   try {
     let dataData = {
       name: req.body.name,
@@ -244,6 +212,7 @@ module.exports.natalEnquiry = async function (req, res) {
     return ReE(res, "Error while submitting enquiry");
   }
 };
+
 module.exports.corporatePlan = async function (req, res) {
   try {
     let dataData = {
@@ -267,8 +236,6 @@ module.exports.corporatePlan = async function (req, res) {
 module.exports.dietPlan = async (req, res) => {
   try {
     const user_id = req.user.id;
-
-    // "type": "weight and muscle gain", //[ "weight and muscle gain","weight and fat loss","thyroid and diabetic","meal plan"]
 
     let diet_pan_detail = await diet_plan.create({
       user_id,
@@ -303,6 +270,47 @@ module.exports.dietPlan = async (req, res) => {
     });
   } catch (error) {
     console.error("Service Booking Error:", error);
+    return res.status(500).json({ message: "Internal Server Error", error });
+  }
+};
+
+// NEW: fitnessPlan controller (mirrors dietPlan)
+module.exports.fitnessPlan = async (req, res) => {
+  try {
+    const user_id = req.user.id;
+
+    let fitness_plan_detail = await fitness_plan.create({
+      user_id,
+      type: req.body.type,
+      price: req.body.price,
+      plan_for: req.body.plan_for,
+      gender: req.body.gender,
+      name: req.body.name,
+      number: req.body.number,
+      age: req.body.age,
+      height: req.body.height,
+      weight: req.body.weight,
+      goal: req.body.goal,
+      daily_physical_activity: req.body.daily_physical_activity,
+      allergy: req.body.allergy,
+      plan_type: req.body.plan_type,
+      final_price: req.body.final_price,
+    });
+
+    let paymentResponse = await createOrder(
+      req.body.type,
+      user_id,
+      req.body.price,
+      "fitness", // important: tells createOrder to write fitness_plan_id
+      fitness_plan_detail.id
+    );
+
+    return res.status(200).json({
+      message: `Fitness plan updated successfully`,
+      response: { paymentResponse },
+    });
+  } catch (error) {
+    console.error("Fitness Plan Error:", error);
     return res.status(500).json({ message: "Internal Server Error", error });
   }
 };
@@ -389,6 +397,45 @@ module.exports.dietTransaction = async function (req, res) {
       offset,
     });
 
+    return ReS(res, "Diet Payments fetched", payments);
+  } catch (error) {
+    console.error("Error fetching Diet Payments:", error);
+    return ReE(res, "An error occurred while fetching Diet Payments", 500);
+  }
+};
+
+// NEW: fitnessTransaction to list fitness plan payments
+module.exports.fitnessTransaction = async function (req, res) {
+  try {
+    let { limit, offset, search } = req.query;
+
+    limit = isNaN(Number(limit)) ? 10 : Number(limit);
+    offset = isNaN(Number(offset)) ? 0 : Number(offset);
+
+    const payments = await Payment.findAndCountAll({
+      where: {
+        user_id: req.user.id,
+      },
+      include: [
+        {
+          model: fitness_plan,
+          as: "fitness_plan",
+          required: true,
+        },
+      ],
+      attributes: [
+        "id",
+        "order_id",
+        "payment_id",
+        "amount",
+        "status",
+        "created_at",
+      ],
+      order: [["created_at", "DESC"]],
+      limit,
+      offset,
+    });
+
     return ReS(res, "Fitness Payments fetched", payments);
   } catch (error) {
     console.error("Error fetching Fitness Payments:", error);
@@ -398,7 +445,6 @@ module.exports.dietTransaction = async function (req, res) {
 
 module.exports.ongoingEnquiry = async (req, res) => {
   try {
-
     let allReceivedConnectionList = await connection_data.findAndCountAll({
       where: {
         user_id: req.user.id,
@@ -415,7 +461,7 @@ module.exports.ongoingEnquiry = async (req, res) => {
             "phone",
             "service_type",
             "experience",
-          ], // Add more fields if needed
+          ],
         },
       ],
     });
@@ -439,58 +485,46 @@ module.exports.razorpayWebhook = async (req, res) => {
   try {
     const signature = req.headers["x-razorpay-signature"];
     const body = JSON.stringify(req.body);
-    const expectedSignature = crypto
+    
+       const expectedSignature = crypto
       .createHmac("sha256", "xrazorpaysignature")
       .update(body)
       .digest("hex");
 
-      console.log("Just before the webhook===================")
-      console.log("Just before the webhook======body=============",body)
+    console.log("Just before the webhook===================");
+    console.log("Just before the webhook======body=============", body);
+
     if (signature === expectedSignature) {
+      const notes = (req.body && req.body.payload && req.body.payload.payment && req.body.payload.payment.entity && req.body.payload.payment.entity.notes) || {};
+
       switch (req.body.event) {
         case "payment.authorized":
           console.log("ℹ️ Payment authorized:");
           break;
 
         case "payment.captured":
+          console.log("payment.captured notes:", notes);
 
-          console.log("payment.captured===================",  req.body.payload.payment.entity.notes.service_booking_id)
-       
-
-          if (req.body.payload.payment.entity.notes.trail === true) {
-            let service_booking_id =
-              req.body.payload.payment.entity.notes.service_booking_id;
+          // handle trial payments (trail flag may be boolean or string)
+          if (notes.trail === true || notes.trail === "true") {
+            let service_booking_id = notes.service_booking_id;
 
             let paymentDetail = await Payment.findOne({
               where: {
                 service_booking_id,
-                service_type:
-                  req.body.payload.payment.entity.notes.service_type,
+                service_type: notes.service_type,
                 amount: 1,
               },
             });
-
-               console.log("payment.captured=================== 100000")
 
             if (!paymentDetail) {
               throw new Error("Payment detail not found!");
             }
 
-
-            console.log("payment.captured=================== 200000")
-
             await Payment.update(
-              {
-                status: "success",
-              },
-              {
-                where: {
-                  id: paymentDetail.id,
-                },
-              }
+              { status: "success" },
+              { where: { id: paymentDetail.id } }
             );
-
-            console.log("payment.captured=================== 300000")
 
             await service_bookings.update(
               {
@@ -499,99 +533,75 @@ module.exports.razorpayWebhook = async (req, res) => {
               },
               {
                 where: {
-                  id:service_booking_id,
+                  id: service_booking_id,
                 },
               }
             );
 
-            console.log("payment.captured=================== 400000")
-
             let requiredTrainerExperience = await service_bookings.findOne({
               where: {
-                id:service_booking_id,
-                
+                id: service_booking_id,
               },
-            })
+            });
 
-
-            console.log("payment.captured=================== 600000")
-            let requiredTrainerEx=requiredTrainerExperience.trainer_type;
+            let requiredTrainerEx = requiredTrainerExperience?.trainer_type;
             let userDetail = await Users.findOne({
-
               where: {
                 id: paymentDetail.user_id,
               },
               attributes: ["id", "email", "name", "lat", "lon"],
             });
 
-            console.log("just befoer===========================")
-            await createAndSendEnquiry(userDetail, service_booking_id,requiredTrainerEx);
+            await createAndSendEnquiry(userDetail, service_booking_id, requiredTrainerEx);
           } else {
-            // there will be two condition
-            // 1. payment after tail which is service
-            //2. payment of diet plan
-
-            // if service id is present means, it is for service of type trainer or yoga
-            //else is s payment for diet
-            if (req.body.payload.payment.entity.notes.service_booking_id) {
-              let amount = parseInt(
-                req.body.payload.payment.entity.amount / 100
-              );
+            // Non-trial payments: trainer/service vs diet vs fitness
+            if (notes.service_booking_id) {
+              let amount = parseInt(req.body.payload.payment.entity.amount / 100);
               await Payment.update(
-                {
-                  status: "success",
-                },
+                { status: "success" },
                 {
                   where: {
-                    service_booking_id:
-                      req.body.payload.payment.entity.notes.service_booking_id,
-                    service_type:
-                      req.body.payload.payment.entity.notes.service_type,
+                    service_booking_id: notes.service_booking_id,
+                    service_type: notes.service_type,
                     amount: { [Op.gt]: 99 },
                   },
                 }
               );
 
               await service_bookings.update(
-                {
-                  service_taken: true,
-                },
-                {
-                  where: {
-                    id:
-                      req.body.payload.payment.entity.notes.service_booking_id,
-                  },
-                }
+                { service_taken: true },
+                { where: { id: notes.service_booking_id } }
               );
             } else {
-              await Payment.update(
-                {
-                  status: "success",
-                },
-                {
-                  where: {
-                    diet_plan_id:
-                      req.body.payload.payment.entity.notes.diet_plan_id,
-                  },
-                }
-              );
+              // diet or fitness
+              if (notes.fitness_plan_id) {
+                await Payment.update(
+                  { status: "success" },
+                  { where: { fitness_plan_id: notes.fitness_plan_id } }
+                );
+              } else {
+                await Payment.update(
+                  { status: "success" },
+                  {
+                    where: {
+                      diet_plan_id: notes.diet_plan_id,
+                    },
+                  }
+                );
+              }
             }
           }
           break;
 
         case "payment.failed":
-         
-
-          // condition for trail payment fail for trainer or yoga
-          if (req.body.payload.payment.entity.notes.trail === true) {
-            let service_booking_id =
-              req.body.payload.payment.entity.notes.service_booking_id;
+          // handle trial failures
+          if (notes.trail === true || notes.trail === "true") {
+            let service_booking_id = notes.service_booking_id;
 
             let paymentDetail = await Payment.findOne({
               where: {
                 service_booking_id,
-                service_type:
-                  req.body.payload.payment.entity.notes.service_type,
+                service_type: notes.service_type,
                 amount: 99,
               },
             });
@@ -601,44 +611,38 @@ module.exports.razorpayWebhook = async (req, res) => {
             }
 
             await Payment.update(
-              {
-                status: "failed",
-              },
-              {
-                where: {
-                  id: paymentDetail.id,
-                },
-              }
+              { status: "failed" },
+              { where: { id: paymentDetail.id } }
             );
           } else {
-            // condition for diet plan or trainer or yoga full payment faile
-            if (req.body.payload.payment.entity.notes.service_booking_id) {
+            // Non-trial failed: service booking OR diet OR fitness
+            if (notes.service_booking_id) {
               await Payment.update(
-                {
-                  status: "failed",
-                },
+                { status: "failed" },
                 {
                   where: {
-                    service_booking_id:
-                      req.body.payload.payment.entity.notes.service_booking_id,
-                    service_type:
-                      req.body.payload.payment.entity.notes.service_type,
+                    service_booking_id: notes.service_booking_id,
+                    service_type: notes.service_type,
                     amount: { [Op.gt]: 99 },
                   },
                 }
               );
             } else {
-              await Payment.update(
-                {
-                  status: "failed",
-                },
-                {
-                  where: {
-                    diet_plan_id:
-                      req.body.payload.payment.entity.notes.diet_plan_id,
-                  },
-                }
-              );
+              if (notes.fitness_plan_id) {
+                await Payment.update(
+                  { status: "failed" },
+                  { where: { fitness_plan_id: notes.fitness_plan_id } }
+                );
+              } else {
+                await Payment.update(
+                  { status: "failed" },
+                  {
+                    where: {
+                      diet_plan_id: notes.diet_plan_id,
+                    },
+                  }
+                );
+              }
             }
           }
 
@@ -650,8 +654,7 @@ module.exports.razorpayWebhook = async (req, res) => {
       return res
         .status(200)
         .json({ success: true, message: "Webhook verified and processed" });
-    } 
-    else {
+    } else {
       console.log(" Signature mismatch");
       return res
         .status(400)
@@ -682,16 +685,13 @@ module.exports.requestPasswordReset = async function (req, res) {
     const user = await Users.findOne({ where: { email } });
     if (!user) return ReE(res, "User with this email does not exist.");
 
-    // Generate a 6-digit OTP (numeric)
     const otp = Math.floor(100000 + Math.random() * 900000).toString();
 
-    // Save OTP to user model (password_reset_otp)
     await Users.update(
       { password_reset_otp: otp },
       { where: { email } }
     );
 
-    
     await resetPasswordOtp({
       email,
       otp,
@@ -718,10 +718,8 @@ module.exports.resetPassword = async function (req, res) {
     if (!user) return ReE(res, "User not found.");
     if (user.password_reset_otp !== otp) return ReE(res, "Invalid OTP.");
 
-    // Hash the new password
     const hashedPassword = await bcrypt.hash(newPassword, 10);
 
-    // Update password and clear the OTP
     await Users.update(
       { password: hashedPassword, password_reset_otp: null },
       { where: { email } }
@@ -732,4 +730,4 @@ module.exports.resetPassword = async function (req, res) {
     console.error(error);
     return ReE(res, "Error resetting password. Please try again.");
   }
-}
+};

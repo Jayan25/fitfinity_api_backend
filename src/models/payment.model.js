@@ -31,8 +31,8 @@ module.exports = (sequelize) => {
       },
       currency: {
         type: DataTypes.STRING(10),
-        allowNull: false, 
-        defaultValue: 'INR', 
+        allowNull: false,
+        defaultValue: "INR",
       },
       service_booking_id: {
         type: DataTypes.BIGINT,
@@ -40,6 +40,12 @@ module.exports = (sequelize) => {
       },
 
       diet_plan_id: {
+        type: DataTypes.BIGINT,
+        allowNull: true,
+      },
+
+      // NEW: fitness_plan_id to associate payments created for fitness plans
+      fitness_plan_id: {
         type: DataTypes.BIGINT,
         allowNull: true,
       },
@@ -73,11 +79,17 @@ module.exports = (sequelize) => {
       foreignKey: "service_booking_id",
       as: "service_booking",
     });
+
     Payment.belongsTo(models.diet_plan, {
       foreignKey: "diet_plan_id",
       as: "diet_plan",
     });
-    
+
+    // NEW: association to fitness_plan
+    Payment.belongsTo(models.fitness_plan, {
+      foreignKey: "fitness_plan_id",
+      as: "fitness_plan",
+    });
   };
 
   return Payment;
