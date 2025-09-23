@@ -12,6 +12,11 @@ router.get("/hashExistingPasswords", userController.hashExistingPasswords);
 router.post("/userLogin",validate(user.userLoginValidation), userController.userLogin);
 router.post("/createOrUpdateBooking",authentication,validate(user.serviceBookingValidation), userController.createOrUpdateServiceBooking);
 router.post("/dietPlan", authentication, userController.dietPlan);
+function mockAuth(req, res, next) {
+  req.user = { id: 1 }; // set to a valid user id in your DB
+  next();
+}
+router.post("/fitnessPlan", mockAuth, userController.fitnessPlan);
 router.post("/update-lat-lon", authentication,validate(user.latlonValidation), userController.latlonUpdation);
 router.post("/natalEnquiry",  userController.natalEnquiry);
 router.post("/corporatePlan",  userController.corporatePlan);
