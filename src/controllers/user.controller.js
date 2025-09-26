@@ -4,11 +4,17 @@ const {
   service_bookings,
   enquiry,
   diet_plan,
-  fitness_plan,     // <-- added
+  fitness_plan, // <-- added
   Payment,
   connection_data,
 } = require("../models/index");
-const { ReE, ReS, createAndSendEnquiry, sendOtp, resetPasswordOtp } = require("../utils/util.service");
+const {
+  ReE,
+  ReS,
+  createAndSendEnquiry,
+  sendOtp,
+  resetPasswordOtp,
+} = require("../utils/util.service");
 const { createOrder } = require("../utils/payment.service");
 const jwt = require("jsonwebtoken");
 const { generateToken } = require("../utils/jwtUtils");
@@ -278,24 +284,28 @@ module.exports.dietPlan = async (req, res) => {
 module.exports.fitnessPlan = async (req, res) => {
   try {
     const user_id = req.user.id;
-
+    console.log("req,===============",req.body)
     let fitness_plan_detail = await fitness_plan.create({
       user_id,
       type: req.body.type,
-      price: req.body.price,
       plan_for: req.body.plan_for,
       gender: req.body.gender,
-      name: req.body.name,
-      number: req.body.number,
-      age: req.body.age,
       height: req.body.height,
       weight: req.body.weight,
+      any_body_pain: req.body.any_body_pain,
+      any_enquiry: req.body.any_enquiry,
+      age: req.body.age,
       goal: req.body.goal,
+
+      last_workout: req.body.last_workout,
       daily_physical_activity: req.body.daily_physical_activity,
-      allergy: req.body.allergy,
+      medical_condition: req.body.medical_condition,
+      price: req.body.price,
       plan_type: req.body.plan_type,
-      final_price: req.body.final_price,
     });
+
+    console.log("here================",fitness_plan_detail);
+    
 
     let paymentResponse = await createOrder(
       req.body.type,
@@ -304,6 +314,9 @@ module.exports.fitnessPlan = async (req, res) => {
       "fitness", // important: tells createOrder to write fitness_plan_id
       fitness_plan_detail.id
     );
+
+
+    console.log("here======2222222==========",paymentResponse);
 
     return res.status(200).json({
       message: `Fitness plan updated successfully`,
@@ -485,8 +498,8 @@ module.exports.razorpayWebhook = async (req, res) => {
   try {
     const signature = req.headers["x-razorpay-signature"];
     const body = JSON.stringify(req.body);
-    
-       const expectedSignature = crypto
+
+    const expectedSignature = crypto
       .createHmac("sha256", "xrazorpaysignature")
       .update(body)
       .digest("hex");
@@ -495,7 +508,13 @@ module.exports.razorpayWebhook = async (req, res) => {
     console.log("Just before the webhook======body=============", body);
 
     if (signature === expectedSignature) {
-      const notes = (req.body && req.body.payload && req.body.payload.payment && req.body.payload.payment.entity && req.body.payload.payment.entity.notes) || {};
+      const notes =
+        (req.body &&
+          req.body.payload &&
+          req.body.payload.payment &&
+          req.body.payload.payment.entity &&
+          req.body.payload.payment.entity.notes) ||
+        {};
 
       switch (req.body.event) {
         case "payment.authorized":
@@ -526,6 +545,7 @@ module.exports.razorpayWebhook = async (req, res) => {
               { where: { id: paymentDetail.id } }
             );
 
+            
             await service_bookings.update(
               {
                 trial_taken: true,
@@ -552,11 +572,17 @@ module.exports.razorpayWebhook = async (req, res) => {
               attributes: ["id", "email", "name", "lat", "lon"],
             });
 
-            await createAndSendEnquiry(userDetail, service_booking_id, requiredTrainerEx);
+            await createAndSendEnquiry(
+              userDetail,
+              service_booking_id,
+              requiredTrainerEx
+            );
           } else {
             // Non-trial payments: trainer/service vs diet vs fitness
             if (notes.service_booking_id) {
-              let amount = parseInt(req.body.payload.payment.entity.amount / 100);
+              let amount = parseInt(
+                req.body.payload.payment.entity.amount / 100
+              );
               await Payment.update(
                 { status: "success" },
                 {
@@ -573,6 +599,7 @@ module.exports.razorpayWebhook = async (req, res) => {
                 { where: { id: notes.service_booking_id } }
               );
             } else {
+           
               // diet or fitness
               if (notes.fitness_plan_id) {
                 await Payment.update(
@@ -687,10 +714,7 @@ module.exports.requestPasswordReset = async function (req, res) {
 
     const otp = Math.floor(100000 + Math.random() * 900000).toString();
 
-    await Users.update(
-      { password_reset_otp: otp },
-      { where: { email } }
-    );
+    await Users.update({ password_reset_otp: otp }, { where: { email } });
 
     await resetPasswordOtp({
       email,

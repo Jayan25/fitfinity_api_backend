@@ -61,6 +61,7 @@ module.exports.createOrder = async (service_type, user_id, price, from, id) => {
     let service_booking_id = null;
     let diet_plan_id = null;
     let fitness_plan_id = null;
+    let trail=true;  // there is no trail for diet and fitness services
 
     // If it's a trainer booking, amount is from SERVICE_PRICES and id is service_booking_id
     if (from === "trainer") {
@@ -72,12 +73,15 @@ module.exports.createOrder = async (service_type, user_id, price, from, id) => {
     } else if (from === "diet") {
       // diet plan creation flow
       diet_plan_id = id;
+      trail=false;
     } else if (from === "fitness") {
       // fitness plan creation flow
       fitness_plan_id = id;
+      trail=false;
     } else {
       // fallback: treat as diet plan if unspecified (preserves previous behavior)
       diet_plan_id = id;
+      trail=false;
     }
 
     const order = await razorpay.orders.create({
@@ -90,9 +94,12 @@ module.exports.createOrder = async (service_type, user_id, price, from, id) => {
         diet_plan_id,
         fitness_plan_id,
         service_type,
-        trail: true, // keep same behaviour as existing flow; dynamic links set this false
+        trail, 
       },
     });
+
+
+    console.log("order======22222222====",order)
 
     // Store order in DB (keep trainer_id default as before — adjust as needed)
     let paymanredata = await Payment.create({

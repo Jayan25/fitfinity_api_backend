@@ -9,12 +9,12 @@ module.exports = (sequelize, DataTypes) => {
         primaryKey: true,
         autoIncrement: true,
       },
-      type: {
-        type: DataTypes.ENUM("muscle building", "weight loss"),
+      user_id: {
+        type: DataTypes.BIGINT,
         allowNull: false,
       },
-      price: {
-        type: DataTypes.STRING,
+      type: {
+        type: DataTypes.ENUM("muscle building", "weight loss"),
         allowNull: false,
       },
       plan_for: {
@@ -25,18 +25,6 @@ module.exports = (sequelize, DataTypes) => {
         type: DataTypes.ENUM("male", "female"),
         allowNull: false,
       },
-      name: {
-        type: DataTypes.STRING,
-        allowNull: false,
-      },
-      number: {
-        type: DataTypes.STRING,
-        allowNull: false,
-      },
-      age: {
-        type: DataTypes.INTEGER,
-        allowNull: false,
-      },
       height: {
         type: DataTypes.STRING,
         allowNull: false,
@@ -45,28 +33,40 @@ module.exports = (sequelize, DataTypes) => {
         type: DataTypes.STRING,
         allowNull: false,
       },
+      price: {
+        type: DataTypes.STRING,
+        allowNull: false,
+      },
+      any_body_pain: {
+        type: DataTypes.TEXT,
+        allowNull: false,
+      },
+      any_enquiry: {
+        type: DataTypes.TEXT,
+        allowNull: false,
+      },
+      age: {
+        type: DataTypes.INTEGER,
+        allowNull: false,
+      },
       goal: {
         type: DataTypes.TEXT,
         allowNull: false,
+      },
+      last_workout: {
+        type: DataTypes.TEXT,
+        allowNull: true,
       },
       daily_physical_activity: {
         type: DataTypes.ENUM("low", "sedentary", "moderate"),
         allowNull: false,
       },
-      allergy: {
+      medical_condition: {
         type: DataTypes.TEXT,
-        allowNull: true,
+        allowNull: false,
       },
       plan_type: {
         type: DataTypes.ENUM("1month", "3month"),
-        allowNull: false,
-      },
-      final_price: {
-        type: DataTypes.STRING,
-        allowNull: false,
-      },
-      user_id: {
-        type: DataTypes.BIGINT,
         allowNull: false,
       },
     },
