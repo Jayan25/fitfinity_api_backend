@@ -293,7 +293,7 @@ module.exports.fitnessPlan = async (req, res) => {
       height: req.body.height,
       weight: req.body.weight,
       any_body_pain: req.body.any_body_pain,
-      any_enquiry: req.body.any_enquiry,
+      any_injury: req.body.any_injury,
       age: req.body.age,
       goal: req.body.goal,
 
