@@ -41,7 +41,7 @@ module.exports = (sequelize, DataTypes) => {
         type: DataTypes.TEXT,
         allowNull: false,
       },
-      any_enquiry: {
+      any_injury: {
         type: DataTypes.TEXT,
         allowNull: false,
       },

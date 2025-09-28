@@ -8,7 +8,7 @@ CREATE TABLE fitness_plans (
     weight VARCHAR(50) NOT NULL,
     price VARCHAR(255) NOT NULL,
     any_body_pain TEXT NOT NULL,
-    any_enquiry TEXT NOT NULL,
+    any_injury TEXT NOT NULL,
     age INT NOT NULL,
     goal TEXT NOT NULL,
     last_workout TEXT NULL,
