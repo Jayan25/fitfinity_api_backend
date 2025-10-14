@@ -715,6 +715,11 @@ module.exports.getAlldietPlanPayment = async function (req, res) {
           as: "user",
           attributes: ["id", "name", "email", "mobile", "address"], // Add any fields you want from the Users table
         },
+        {
+          model:Payment,
+          as:"payments",
+          attributes: ["id", "status", "amount", "service_type"],
+        }
       ],
     });
 
