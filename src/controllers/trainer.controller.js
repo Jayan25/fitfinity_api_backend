@@ -7,7 +7,13 @@ const {
   Payment,
   service_bookings,
 } = require("../models/index");
-const { ReE, ReS, sendEmail, sendOtp,resetPasswordOtp } = require("../utils/util.service");
+const {
+  ReE,
+  ReS,
+  sendEmail,
+  sendOtp,
+  resetPasswordOtp,
+} = require("../utils/util.service");
 const { genereateDynamicPaymentLink } = require("../utils/payment.service");
 const jwt = require("jsonwebtoken");
 const { generateToken } = require("../utils/jwtUtils");
@@ -18,6 +24,7 @@ const { Op, where } = require("sequelize");
 // const Razorpay = require("razorpay");
 // const crypto = require("crypto");
 const dotenv = require("dotenv");
+// const { default: payments } = require("razorpay/dist/types/payments");
 dotenv.config();
 
 module.exports.SignUp = async function (req, res) {
@@ -304,13 +311,14 @@ module.exports.generateSignedUrl = async function (req, res) {
 
 module.exports.transaction = async (req, res) => {
   try {
-
-    console.log("payments==========",req.user)
-    let a=await Payment.findAndCountAll({
-      where:{
+    console.log("payments==========", req.user);
+    let a = await Payment.findAndCountAll({
+      where: {
         trainer_id: req.user.id,
-      }
-    })
+      },
+    });
+
+    console.log("a==========", a);
     const payments = await Payment.findAndCountAll({
       where: {
         trainer_id: req.user.id,
@@ -319,7 +327,25 @@ module.exports.transaction = async (req, res) => {
         {
           model: service_bookings,
           as: "service_booking",
-          required: true,
+          required: false,
+          attributes: [
+            "id",
+            "booking_name",
+            "preferred_time_to_be_served",
+            "training_for",
+            "trial_date",
+            "trial_time",
+            "trainer_type",
+            "training_needed_for",
+            "payment_status",
+            "service_booking_step",
+            "created_at",
+          ],
+        },
+        {
+          model: service_bookings,
+          as: "service_booking",
+          required: false,
           attributes: [
             "id",
             "booking_name",
@@ -346,12 +372,8 @@ module.exports.transaction = async (req, res) => {
       order: [["created_at", "DESC"]],
     });
 
-    console.log("payments===========",payments[0])
-    return ReS(
-      res,
-      "Transaction Fetched success!",
-      payments
-    );
+    console.log("payments===========", payments[0]);
+    return ReS(res, "Transaction Fetched success!", payments);
   } catch (error) {
     console.error("Service Booking Error:", error);
     return res.status(500).json({ message: "Internal Server Error", error });
@@ -394,7 +416,7 @@ module.exports.ongoingEnquiry = async (req, res) => {
     let allReceivedConnectionList = await connection_data.findAndCountAll({
       where: {
         trainer_id: req.user.id,
-        status: { [Op.in]: [1, 4] }, 
+        status: { [Op.in]: [1, 4] },
       },
       include: [
         {
@@ -463,7 +485,6 @@ module.exports.startStopService = async (req, res) => {
     let { connection_id, action } = req.body;
     let message = "";
     if (action === "start") {
-    
       let findConnection = await connection_data.findOne({
         where: {
           id: connection_id,
@@ -476,7 +497,7 @@ module.exports.startStopService = async (req, res) => {
       }
 
       const otp = Math.floor(1000 + Math.random() * 9000);
-   
+
       await connection_data.update(
         { otp },
         {
@@ -495,13 +516,26 @@ module.exports.startStopService = async (req, res) => {
         otp: otp,
       };
 
-
-
       // email to send otp just before starting the service
       await sendOtp(emailData);
-      message = "Otp is sent on registerd Email";
-    } else {
 
+      message = "Otp is sent on registerd Email";
+      await Payment.update(
+        { trainer_id: findConnection.trainer_id },
+        { where: { service_booking_id: findConnection.service_booking_id } }
+      );
+
+      await service_bookings.update(
+        {
+         trainer_id: findConnection.trainer_id
+        },
+        {
+          where: {
+            id: findConnection.service_booking_id,
+          },
+        }
+      );
+    } else {
       let findConnection = await connection_data.findOne({
         where: {
           id: connection_id,
@@ -514,7 +548,6 @@ module.exports.startStopService = async (req, res) => {
           id: findConnection.service_booking_id,
         },
       });
-
 
       if (!findConnection) {
         return ReE(res, "You are not connected with user!");
@@ -530,7 +563,6 @@ module.exports.startStopService = async (req, res) => {
         },
       });
 
-
       if (!userDetail) {
         return ReE(res, "User detail not found");
       }
@@ -539,7 +571,6 @@ module.exports.startStopService = async (req, res) => {
           id: findConnection.trainer_id,
         },
       });
-
 
       if (!trainerDetail) {
         return ReE(res, "Trainer detail not found");
@@ -550,7 +581,6 @@ module.exports.startStopService = async (req, res) => {
         userDetail,
         trainerDetail
       );
-
 
       let emailData = {
         email: userDetail.email,
@@ -573,8 +603,6 @@ module.exports.startStopService = async (req, res) => {
 };
 module.exports.otpVerification = async (req, res) => {
   try {
-
-
     let { connection_id, otp } = req.body;
     let findConnection = await connection_data.findOne({
       where: {
@@ -584,8 +612,7 @@ module.exports.otpVerification = async (req, res) => {
       },
     });
 
- 
-    if (otp !=findConnection.otp) {
+    if (otp != findConnection.otp) {
       return ReE(res, "Otp is not correct!");
     }
 
@@ -646,10 +673,7 @@ module.exports.requestPasswordReset = async function (req, res) {
     const otp = Math.floor(100000 + Math.random() * 900000).toString();
 
     // Save OTP to user model (password_reset_otp)
-    await Trainers.update(
-      { password_reset_otp: otp },
-      { where: { email } }
-    );
+    await Trainers.update({ password_reset_otp: otp }, { where: { email } });
 
     // Send the OTP via email (reuse your sendOtp utility)
     await resetPasswordOtp({
@@ -692,8 +716,7 @@ module.exports.resetPassword = async function (req, res) {
     console.error(error);
     return ReE(res, "Error resetting password. Please try again.");
   }
-}
-
+};
 
 // const razorpay = new Razorpay({
 //   key_id: process.env.RAZORPAY_KEY_ID,

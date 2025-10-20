@@ -155,6 +155,8 @@ module.exports.createOrUpdateServiceBooking = async (req, res) => {
 
     let serviceBookingsData = await service_bookings.create(payload);
 
+    console.log("serviceBookingsData.id=========",serviceBookingsData.id)
+
     let paymentResponse = await createOrder(
       req.body.service_type,
       user_id,
@@ -598,6 +600,16 @@ module.exports.razorpayWebhook = async (req, res) => {
                 { service_taken: true },
                 { where: { id: notes.service_booking_id } }
               );
+
+              await connection_data.update(
+                    { status:3 },
+                    {
+                      where: {
+                        service_booking_id:  notes.service_booking_id,
+                        status:1
+                      },
+                    }
+                  );
             } else {
            
               // diet or fitness

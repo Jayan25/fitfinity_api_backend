@@ -63,11 +63,17 @@ module.exports.createOrder = async (service_type, user_id, price, from, id) => {
     let fitness_plan_id = null;
     let trail=true;  // there is no trail for diet and fitness services
 
+    console.log("id==========",id);
+
+    console.log("from========",from)
+    
+
     // If it's a trainer booking, amount is from SERVICE_PRICES and id is service_booking_id
     if (from === "trainer") {
       if (!SERVICE_PRICES[service_type]) {
         throw new Error("Invalid service type");
       }
+      console.log("I am inside=======")
       amount = SERVICE_PRICES[service_type];
       service_booking_id = id;
     } else if (from === "diet") {
@@ -115,6 +121,8 @@ module.exports.createOrder = async (service_type, user_id, price, from, id) => {
       currency: "INR",
     });
 
+
+console.log("paymanredata==",paymanredata)
     let data = {
       amount,
       order_id: order.id,
