@@ -186,10 +186,11 @@ module.exports.genereateDynamicPaymentLink = async (
         amount:100,
         status: "pending",
         service_type: serviceBookingsData.service_type,
-        currency: "INR"
+        currency: "INR",
+        service_booking_id:findConnection.service_booking_id
       });
 
-
+      
     const paymentLink = `https://www.fitfinitytrainer.com/pay?order_id=${order.id}`;
     return paymentLink;
   } catch (error) {
