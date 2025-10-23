@@ -312,16 +312,10 @@ module.exports.generateSignedUrl = async function (req, res) {
 module.exports.transaction = async (req, res) => {
   try {
     console.log("payments==========", req.user);
-    let a = await Payment.findAndCountAll({
-      where: {
-        trainer_id: req.user.id,
-      },
-    });
-
-    console.log("a==========", a);
     const payments = await Payment.findAndCountAll({
       where: {
         trainer_id: req.user.id,
+        status:"success"
       },
       include: [
         {
