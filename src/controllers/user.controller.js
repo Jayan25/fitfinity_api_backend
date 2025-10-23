@@ -592,6 +592,7 @@ module.exports.razorpayWebhook = async (req, res) => {
                     service_booking_id: notes.service_booking_id,
                     service_type: notes.service_type,
                     amount: { [Op.gt]: 99 },
+                    order_id:req.body.payload.payment.entity.order_id
                   },
                 }
               );

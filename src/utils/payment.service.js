@@ -183,6 +183,7 @@ module.exports.genereateDynamicPaymentLink = async (
         user_id: userDetail.id,
         order_id: order.id,
         trainer_id: trainerDetail.id,
+        // amount:priceAcordingToTrainerExperience,
         amount:100,
         status: "pending",
         service_type: serviceBookingsData.service_type,
@@ -191,6 +192,7 @@ module.exports.genereateDynamicPaymentLink = async (
       });
 
       
+    // const paymentLink = `https://y9lm3v.csb.app/pay?order_id=${order.id}`;
     const paymentLink = `https://www.fitfinitytrainer.com/pay?order_id=${order.id}`;
     return paymentLink;
   } catch (error) {
