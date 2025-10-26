@@ -547,6 +547,8 @@ module.exports.startStopService = async (req, res) => {
         },
       });
 
+      console.log("111111111",findConnection)
+
       let serviceBookingsData = await service_bookings.findOne({
         where: {
           id: findConnection.service_booking_id,
@@ -567,6 +569,7 @@ module.exports.startStopService = async (req, res) => {
         },
       });
 
+      console.log("222222222",userDetail)
       if (!userDetail) {
         return ReE(res, "User detail not found");
       }
@@ -591,7 +594,10 @@ module.exports.startStopService = async (req, res) => {
         name: userDetail.name,
         service_type: serviceBookingsData.service_type,
         paymentLink,
+        trainerName:trainerDetail.name
       };
+
+      console.log("3333333333333",emailData)
 
       await sendPaymentLink(emailData);
       message = "payment link is sent on registerd email";

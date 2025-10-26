@@ -165,7 +165,7 @@ module.exports.sendPaymentLink = async function (emailData) {
     html: `
         <p>Dear ${emailData.name},</p>
   
-        <p>Thank you for booking your next <strong>${emailData.sessionType}</strong> session with <strong>${emailData.trainerName}</strong>!</p>
+        <p>Thank you for booking your next <strong>${emailData.service_type}</strong> session with <strong>${emailData.trainerName}</strong>!</p>
         <p>To confirm your booking, please complete the payment using the link below:</p>
         <p><a href="${emailData.paymentLink}" target="_blank">${emailData.paymentLink}</a></p>
   
