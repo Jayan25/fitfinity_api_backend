@@ -466,6 +466,16 @@ module.exports.acceptRejectConnection = async (req, res) => {
       }
     );
 
+     await connection_data.update(
+      { status:4 },
+      {
+        where: {
+          status:0,
+          service_booking_id: findConnection.service_booking_id,
+        },
+      }
+    );
+
     return ReS(res, "Connection request is accepted!");
   } catch (error) {
     console.error("ongoing Enquiry fetching error:", error);

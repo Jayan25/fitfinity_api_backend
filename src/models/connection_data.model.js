@@ -26,7 +26,7 @@ module.exports = (sequelize, DataTypes) => {
     status: {
       type: DataTypes.TINYINT, // better than INTEGER for status codes
       allowNull: false,
-      defaultValue: 0, // 0: sent, 1: accepted, 2: rejected,3:completed
+      defaultValue: 0, // 0: sent, 1: accepted, 2: rejected,3:completed, 4: assigned to other
     },
     opt_verification:{
       type: DataTypes.TINYINT, // better than INTEGER for status codes
