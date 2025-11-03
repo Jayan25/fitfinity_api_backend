@@ -25,8 +25,8 @@ const razorpay = new Razorpay({
 // });
 
 const SERVICE_PRICES = {
-  fitness: 1,
-  yoga: 1,
+  fitness: 99,
+  yoga: 99,
   weight_loss_trainer: 6000,
   kickboxing_trainer: 4500,
   mma_trainer: 7000,
@@ -153,7 +153,7 @@ module.exports.genereateDynamicPaymentLink = async (
     let priceAcordingToTrainerExperience=0;
     switch(serviceBookingsData?.trainer_type){
       case "basic":
-        priceAcordingToTrainerExperience=1;
+        priceAcordingToTrainerExperience=7500;
         break;
       case "standard":
         priceAcordingToTrainerExperience=10328;
@@ -183,8 +183,7 @@ module.exports.genereateDynamicPaymentLink = async (
         user_id: userDetail.id,
         order_id: order.id,
         trainer_id: trainerDetail.id,
-        // amount:priceAcordingToTrainerExperience,
-        amount:100,
+        amount:priceAcordingToTrainerExperience,
         status: "pending",
         service_type: serviceBookingsData.service_type,
         currency: "INR",

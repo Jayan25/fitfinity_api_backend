@@ -534,7 +534,7 @@ module.exports.razorpayWebhook = async (req, res) => {
               where: {
                 service_booking_id,
                 service_type: notes.service_type,
-                amount: 1,
+                amount: 99,
               },
             });
 
