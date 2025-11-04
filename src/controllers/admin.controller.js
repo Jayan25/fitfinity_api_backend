@@ -553,7 +553,7 @@ module.exports.getAllYogaPayment = async function (req, res) {
       : {};
 
     const bookingFilter = {
-      service_type: "fitness",
+      service_type: "yoga",
     };
     if (filterType) {
       let start, end;
