@@ -30,7 +30,7 @@ router.get("/yoga-payment",authentication, adminController.getAllYogaPayment);
 router.get("/diet-payment",authentication,  adminController.getAlldietPlanPayment);
 
 // manully connect the trainer with user
-router.post("/connect-trainer",validate(admin.connectWithTrainerValidation), adminController.connectUserWithTrainer);
+router.post("/connect-trainer",authentication,validate(admin.connectWithTrainerValidation), adminController.connectUserWithTrainer);
 
 
 
