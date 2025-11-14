@@ -10,7 +10,7 @@ const admin = require("../validations/admin.js")
 router.post("/login", validate(admin.loginValidation), adminController.login);
 
 //trainer
-router.get("/trainer-list",authentication, validate(admin.trainerListValidation), adminController.getAllTrainers);
+router.get("/trainer-list", validate(admin.trainerListValidation), adminController.getAllTrainers);
 router.get("/trainer-detail/:id",authentication, adminController.getTrainerDetails);
 router.delete("/delete-trainer/:id",authentication, adminController.deleteTrainer);
 router.patch("/block-trainer/:id",authentication, validate(admin.blockUnblockValidation), adminController.blockUnblock);
@@ -30,7 +30,8 @@ router.get("/yoga-payment",authentication, adminController.getAllYogaPayment);
 router.get("/diet-payment",authentication,  adminController.getAlldietPlanPayment);
 
 // manully connect the trainer with user
-router.get("/trainer-to-connect",authentication,  adminController.trainerToConnect);
+router.post("/connect-trainer",validate(admin.connectWithTrainerValidation), adminController.connectUserWithTrainer);
+
 
 
 

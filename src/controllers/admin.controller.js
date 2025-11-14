@@ -19,6 +19,8 @@ const { off } = require("../../app");
 const { Op } = require("sequelize");
 const bcrypt = require("bcryptjs");
 const moment = require("moment");
+const { createOrder } = require("../utils/payment.service");
+
 
 module.exports.login = async function (req, res) {
   try {
@@ -767,5 +769,76 @@ module.exports.trainerToConnect = async function (req, res) {
   } catch (error) {
     console.error("Error fetching trainers:", error);
     return ReE(res, "An error occurred while fetching trainers", 500);
+  }
+};
+
+
+
+module.exports.connectUserWithTrainer = async (req, res) => {
+  try {
+    // const user_id = req.user.id;
+
+    // get all the require data
+    const {user_id,trainer_id,service_type,booking_name,preferred_time_to_be_served,training_for,trial_date,trial_time,trainer_type,training_needed_for,address,landmark,area,pincode}=req.body;
+
+    console.log("requeest===========")
+    let payload = {
+      user_id,
+      service_type:service_type,
+      booking_name: booking_name,
+      preferred_time_to_be_served: preferred_time_to_be_served,
+      training_for:training_for,
+      trial_date: trial_date,
+      trial_time: trial_time,
+      payment_status: "pending",
+      trial_taken: false,
+      service_taken: false,
+      service_booking_step: "1",
+      trainer_type: trainer_type,
+      training_needed_for: training_needed_for,
+      address: address,
+      landmark: landmark,
+      area: area,
+      pincode: pincode,
+    };
+
+    console.log("requeest===========spayload:",payload)
+
+    if (req.body.training_needed_for === "other") {
+      payload.name = req.body.name;
+      payload.contact_number = req.body.contact_number;
+    } else {
+      let userData = await Users.findOne({
+        where: { id: user_id },
+      });
+      if (!userData) {
+        return ReE(res, "User Data Not found");
+      }
+      payload.contact_number = userData.mobile;
+    }
+
+    let serviceBookingsData = await service_bookings.create(payload);
+
+    console.log("requeest===========serviceBookingsData:",serviceBookingsData)
+    
+
+    let paymentResponse = await createOrder(
+      req.body.service_type,
+      user_id,
+      0,
+      "trainer",
+      serviceBookingsData.id,
+      trainer_id
+    );
+
+     console.log("requeest===========paymentResponse:",paymentResponse)
+
+    return res.status(200).json({
+      message: `Booking data updated successfully`,
+      response: { ...serviceBookingsData, paymentResponse },
+    });
+  } catch (error) {
+    console.error("Service Booking Error:", error);
+    return res.status(500).json({ message: "Internal Server Error", error });
   }
 };

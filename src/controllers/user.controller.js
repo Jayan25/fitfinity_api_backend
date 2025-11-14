@@ -108,17 +108,6 @@ module.exports.userLogin = async function (req, res) {
 module.exports.createOrUpdateServiceBooking = async (req, res) => {
   try {
     const user_id = req.user.id;
-    const { service_booking_step } = req.body;
-
-    let booking = await service_bookings.findOne({
-      where: { user_id, payment_status: "pending" },
-      order: [["created_at", "DESC"]],
-    });
-    if (!booking && service_booking_step !== 1) {
-      return res
-        .status(400)
-        .json({ message: "Step 1 must be completed first." });
-    }
 
     let payload = {
       user_id,
@@ -155,7 +144,7 @@ module.exports.createOrUpdateServiceBooking = async (req, res) => {
 
     let serviceBookingsData = await service_bookings.create(payload);
 
-    console.log("serviceBookingsData.id=========",serviceBookingsData.id)
+    console.log("serviceBookingsData.id=========", serviceBookingsData.id);
 
     let paymentResponse = await createOrder(
       req.body.service_type,
@@ -286,7 +275,7 @@ module.exports.dietPlan = async (req, res) => {
 module.exports.fitnessPlan = async (req, res) => {
   try {
     const user_id = req.user.id;
-    console.log("req,===============",req.body)
+    console.log("req,===============", req.body);
     let fitness_plan_detail = await fitness_plan.create({
       user_id,
       type: req.body.type,
@@ -306,8 +295,7 @@ module.exports.fitnessPlan = async (req, res) => {
       plan_type: req.body.plan_type,
     });
 
-    console.log("here================",fitness_plan_detail);
-    
+    console.log("here================", fitness_plan_detail);
 
     let paymentResponse = await createOrder(
       req.body.type,
@@ -317,8 +305,7 @@ module.exports.fitnessPlan = async (req, res) => {
       fitness_plan_detail.id
     );
 
-
-    console.log("here======2222222==========",paymentResponse);
+    console.log("here======2222222==========", paymentResponse);
 
     return res.status(200).json({
       message: `Fitness plan updated successfully`,
@@ -547,7 +534,6 @@ module.exports.razorpayWebhook = async (req, res) => {
               { where: { id: paymentDetail.id } }
             );
 
-            
             await service_bookings.update(
               {
                 trial_taken: true,
@@ -574,11 +560,63 @@ module.exports.razorpayWebhook = async (req, res) => {
               attributes: ["id", "email", "name", "lat", "lon"],
             });
 
-            await createAndSendEnquiry(
-              userDetail,
-              service_booking_id,
-              requiredTrainerEx
-            );
+            if (paymentDetail.trainer_id && paymentDetail.trainer_id == 123) {
+              // we have a condition where admin can connect the user and trainer, but in normal case till here in payment table by defaul dummy trainer id 123
+              await createAndSendEnquiry(
+                userDetail,
+                service_booking_id,
+                requiredTrainerEx
+              );
+            } else {
+              // Connecting the user with trainer and doing entry in connection_data
+
+              
+
+              let createNewEntry={
+                user_id: userDetail.id,
+                trainer_id: paymentDetail.trainer_id,
+                status: 0,
+                service_booking_id,
+              };
+
+              const trainerUser = await Trainers.findOne({
+                where: { id: paymentDetail.trainer_id },
+                attributes: ["fcm_token"],
+              });
+
+              if (trainerUser?.fcm_token) {
+                try {
+                  await admin.messaging().send({
+                    notification: {
+                      title: "New Enquiry Nearby!",
+                      body: `${userDetail.name} is looking for training help near you.`,
+                    },
+                    android: {
+                      notification: {
+                        sound: "fitring",
+                        channelId: "custom-sound-channel",
+                      },
+                    },
+                    apns: {
+                      payload: {
+                        aps: {
+                          sound: "fitring.wav",
+                        },
+                      },
+                    },
+                    token: trainerUser.fcm_token,
+                  });
+                } catch (notificationError) {
+                  console.error(
+                    `Failed to send notification to trainer id ${trainer.id}:`,
+                    notificationError.message
+                  );
+                  
+                }
+              }
+
+              await connection_data.create(createNewEntry);
+            }
           } else {
             // Non-trial payments: trainer/service vs diet vs fitness
             if (notes.service_booking_id) {
@@ -592,7 +630,7 @@ module.exports.razorpayWebhook = async (req, res) => {
                     service_booking_id: notes.service_booking_id,
                     service_type: notes.service_type,
                     amount: { [Op.gt]: 99 },
-                    order_id:req.body.payload.payment.entity.order_id
+                    order_id: req.body.payload.payment.entity.order_id,
                   },
                 }
               );
@@ -603,16 +641,15 @@ module.exports.razorpayWebhook = async (req, res) => {
               );
 
               await connection_data.update(
-                    { status:3 },
-                    {
-                      where: {
-                        service_booking_id:  notes.service_booking_id,
-                        status:1
-                      },
-                    }
-                  );
+                { status: 3 },
+                {
+                  where: {
+                    service_booking_id: notes.service_booking_id,
+                    status: 1,
+                  },
+                }
+              );
             } else {
-           
               // diet or fitness
               if (notes.fitness_plan_id) {
                 await Payment.update(

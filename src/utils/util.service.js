@@ -460,3 +460,37 @@ module.exports.resetPasswordOtp = async function (emailData) {
     console.log("Email Sent success!");
   });
 };
+
+
+module.exports.sendTrailPaymentLink = async function (emailData) {
+  const receiver = {
+    from: process.env.EMAIL,
+    to: emailData.email,
+    subject: `Payment Confirmation for Your trail Session`,
+    html: `
+        <p>Dear ${emailData.name},</p>
+  
+        <p>We have booked your trail <strong>${emailData.service_type}</strong> session with <strong>${emailData.trainerName}</strong>!</p>
+        <p>To confirm your booking, please complete the payment using the link below:</p>
+        <p><a href="${emailData.paymentLink}" target="_blank">${emailData.paymentLink}</a></p>
+  
+        <p>Once the payment is received, we will finalize your session details and share the confirmation. If you have any questions, feel free to reach out.</p>
+  
+        <p>Looking forward to your session!</p>
+  
+        <p>Best regards</p>
+        <p><strong>Team Fitfinity Trainer</strong></p>
+      `,
+  };
+
+  console.log("receiver====", receiver);
+
+  transporter.sendMail(receiver, (error, emailResponse) => {
+    if (error) {
+      console.log("Email sent failed!!", error);
+      return;
+    }
+
+    console.log("Email Sent success!");
+  });
+};
