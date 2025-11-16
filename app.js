@@ -36,7 +36,7 @@ app.use("/web", webRouter);
 app.use("/admin", adminRouter);
 
 
-app.use("/", function (_, res) {
+app.get("/", function (_, res) {
   res.statusCode = 200;
   res.json({ status: "success", message: "Parcel Pending API", data: {} });
 });

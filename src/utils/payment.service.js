@@ -125,8 +125,8 @@ module.exports.createOrder = async (
         service_booking_id: service_booking_id,
       });
 
-      const paymentLink = `https://y9lm3v.csb.app/pay?order_id=${order.id}`;
-      // const paymentLink = `https://www.fitfinitytrainer.com/pay?order_id=${order.id}`;
+      // const paymentLink = `https://y9lm3v.csb.app/pay?order_id=${order.id}`;
+      const paymentLink = `https://www.fitfinitytrainer.com/pay?order_id=${order.id}`;
       console.log("I am insidee condition======paymentLink",paymentLink)
       let userDetail = await Users.findOne({
         where: {
