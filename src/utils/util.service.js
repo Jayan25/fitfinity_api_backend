@@ -218,7 +218,7 @@ module.exports.sendKycRejectionEmail = async function (emailData) {
 
 const RADIUS_KM = process.env.RADIUS_KM;
 
-function calculateDistance(lat1, lon1, lat2, lon2) {
+module.exports.calculateDistance=(lat1, lon1, lat2, lon2) =>{
   const radlat1 = (Math.PI * lat1) / 180;
   const radlat2 = (Math.PI * lat2) / 180;
   const theta = lon1 - lon2;
@@ -308,21 +308,21 @@ module.exports.createAndSendEnquiry = async function (
   requiredTrainerEx
 ) {
   try {
-    let endTrainerEx = 2;
+    let startTrainerEx = 1;
     console.log("payment.captured=================== 700000")
 
     switch (requiredTrainerEx) {
       case "basic":
-         endTrainerEx = 30;
+         startTrainerEx = 1;
         break;
       case "standard":
-        endTrainerEx = 6;
+        startTrainerEx = 2;
         break;
       case "premium":
-        endTrainerEx = 25;
+        startTrainerEx = 5;
         break;
       case "couple/group":
-        endTrainerEx = 25;
+        startTrainerEx = 5;
         break;
 
       default:
@@ -336,7 +336,7 @@ module.exports.createAndSendEnquiry = async function (
         kyc_status: "done",
         block_status: "Unblocked",
         experience: {
-          [Op.lte]: endTrainerEx, 
+          [Op.gte]: startTrainerEx, 
         },
       },
       attributes: ["id", "email", "name", "lat", "lon"],

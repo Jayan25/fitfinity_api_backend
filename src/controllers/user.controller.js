@@ -14,6 +14,7 @@ const {
   createAndSendEnquiry,
   sendOtp,
   resetPasswordOtp,
+  calculateDistance,
 } = require("../utils/util.service");
 const { createOrder } = require("../utils/payment.service");
 const jwt = require("jsonwebtoken");
@@ -23,6 +24,7 @@ const Razorpay = require("razorpay");
 const crypto = require("crypto");
 const dotenv = require("dotenv");
 const bcrypt = require("bcryptjs");
+const admin = require("../../firebase");
 dotenv.config();
 
 module.exports.SignUp = async function (req, res) {
@@ -129,21 +131,79 @@ module.exports.createOrUpdateServiceBooking = async (req, res) => {
       pincode: req.body.pincode,
     };
 
+    let userData = await Users.findOne({
+      where: { id: user_id },
+    });
+    if (!userData) {
+      return ReE(res, "User Data Not found");
+    }
     if (req.body.training_needed_for === "other") {
       payload.name = req.body.name;
       payload.contact_number = req.body.contact_number;
     } else {
-      let userData = await Users.findOne({
-        where: { id: user_id },
-      });
-      if (!userData) {
-        return ReE(res, "User Data Not found");
-      }
       payload.contact_number = userData.mobile;
     }
 
-    let serviceBookingsData = await service_bookings.create(payload);
+    let endTrainerEx = 2;
+    console.log("payment.captured=================== 700000");
 
+    switch (req.body.trainer_type) {
+      case "basic":
+        endTrainerEx = 30;
+        break;
+      case "standard":
+        endTrainerEx = 6;
+        break;
+      case "premium":
+        endTrainerEx = 25;
+        break;
+      case "couple/group":
+        endTrainerEx = 25;
+        break;
+
+      default:
+        console.log("Invalid experience.");
+    }
+
+    console.log("endTrainerEx=============================", endTrainerEx);
+
+    const trainerList = await Trainers.findAll({
+      where: {
+        kyc_status: "done",
+        block_status: "Unblocked",
+        experience: {
+          [Op.lte]: endTrainerEx,
+        },
+      },
+      attributes: ["id", "email", "name", "lat", "lon"],
+    });
+
+    const nearbyTrainers = [];
+
+    console.log("trainerList detail=========------==", trainerList);
+    console.log("trainerList=========------==", trainerList.length);
+
+    for (let trainer of trainerList) {
+      console.log("for lopppp", trainer);
+      if (trainer.lat && trainer.lon && userData.lat && userData.lon) {
+        console.log("for loop thne iffff");
+        const distance = calculateDistance(
+          userData.lat,
+          userData.lon,
+          trainer.lat,
+          trainer.lon
+        );
+        console.log("distance===============", distance);
+        if (distance <= process.env.RADIUS_KM) {
+          nearbyTrainers.push(trainer);
+        }
+      }
+    }
+    console.log("trainerList=======================", nearbyTrainers);
+    if (nearbyTrainers.length == 0) {
+      return ReE(res, "Trainer not available, contact to customer support!");
+    }
+    let serviceBookingsData = await service_bookings.create(payload);
     console.log("serviceBookingsData.id=========", serviceBookingsData.id);
 
     let paymentResponse = await createOrder(
@@ -570,9 +630,7 @@ module.exports.razorpayWebhook = async (req, res) => {
             } else {
               // Connecting the user with trainer and doing entry in connection_data
 
-              
-
-              let createNewEntry={
+              let createNewEntry = {
                 user_id: userDetail.id,
                 trainer_id: paymentDetail.trainer_id,
                 status: 0,
@@ -611,7 +669,6 @@ module.exports.razorpayWebhook = async (req, res) => {
                     `Failed to send notification to trainer id ${trainer.id}:`,
                     notificationError.message
                   );
-                  
                 }
               }
 
