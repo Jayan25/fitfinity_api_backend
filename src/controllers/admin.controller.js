@@ -7,6 +7,7 @@ const {
   service_bookings,
   diet_plan,
   Payment,
+  connection_data
 } = require("../models/index");
 const {
   ReE,
@@ -20,7 +21,6 @@ const { Op } = require("sequelize");
 const bcrypt = require("bcryptjs");
 const moment = require("moment");
 const { createOrder } = require("../utils/payment.service");
-
 
 module.exports.login = async function (req, res) {
   try {
@@ -143,10 +143,9 @@ module.exports.deleteTrainer = async function (req, res) {
     console.log("new Date()===========", new Date());
     console.log("id===========", id);
 
-   
     await Trainers.destroy({
       where: { id },
-      force: true  
+      force: true,
     });
 
     await TrainerDocument.destroy({
@@ -154,7 +153,7 @@ module.exports.deleteTrainer = async function (req, res) {
         trainer_id: id,
       },
     });
-    
+
     return ReS(res, "Trainer deleted successfully");
   } catch (error) {
     console.error("Error deleting admin:", error);
@@ -718,10 +717,10 @@ module.exports.getAlldietPlanPayment = async function (req, res) {
           attributes: ["id", "name", "email", "mobile", "address"], // Add any fields you want from the Users table
         },
         {
-          model:Payment,
-          as:"payments",
+          model: Payment,
+          as: "payments",
           attributes: ["id", "status", "amount", "service_type"],
-        }
+        },
       ],
     });
 
@@ -772,22 +771,35 @@ module.exports.trainerToConnect = async function (req, res) {
   }
 };
 
-
-
 module.exports.connectUserWithTrainer = async (req, res) => {
   try {
     // const user_id = req.user.id;
 
     // get all the require data
-    const {user_id,trainer_id,service_type,booking_name,preferred_time_to_be_served,training_for,trial_date,trial_time,trainer_type,training_needed_for,address,landmark,area,pincode}=req.body;
+    const {
+      user_id,
+      trainer_id,
+      service_type,
+      booking_name,
+      preferred_time_to_be_served,
+      training_for,
+      trial_date,
+      trial_time,
+      trainer_type,
+      training_needed_for,
+      address,
+      landmark,
+      area,
+      pincode,
+    } = req.body;
 
-    console.log("requeest===========")
+    console.log("requeest===========");
     let payload = {
       user_id,
-      service_type:service_type,
+      service_type: service_type,
       booking_name: booking_name,
       preferred_time_to_be_served: preferred_time_to_be_served,
-      training_for:training_for,
+      training_for: training_for,
       trial_date: trial_date,
       trial_time: trial_time,
       payment_status: "pending",
@@ -800,10 +812,10 @@ module.exports.connectUserWithTrainer = async (req, res) => {
       landmark: landmark,
       area: area,
       pincode: pincode,
-      trainer_id
+      trainer_id,
     };
 
-    console.log("requeest===========spayload:",payload)
+    console.log("requeest===========spayload:", payload);
 
     if (req.body.training_needed_for === "other") {
       payload.name = req.body.name;
@@ -820,9 +832,19 @@ module.exports.connectUserWithTrainer = async (req, res) => {
 
     let serviceBookingsData = await service_bookings.create(payload);
 
-    console.log("requeest===========serviceBookingsData:",serviceBookingsData)
-    
+    console.log("requeest===========serviceBookingsData:", serviceBookingsData);
 
+    let createNewEntry = {
+      user_id: user_id,
+      trainer_id: trainer_id,
+      status: 1,
+      service_booking_id:serviceBookingsData.id,
+      otp:1234,
+      opt_verification:"done"
+    };
+
+    console.log("createNewEntry======",createNewEntry)
+    await connection_data.create(createNewEntry);
     let paymentResponse = await createOrder(
       req.body.service_type,
       user_id,
@@ -832,7 +854,7 @@ module.exports.connectUserWithTrainer = async (req, res) => {
       trainer_id
     );
 
-     console.log("requeest===========paymentResponse:",paymentResponse)
+    console.log("requeest===========paymentResponse:", paymentResponse);
 
     return res.status(200).json({
       message: `Booking data updated successfully`,
