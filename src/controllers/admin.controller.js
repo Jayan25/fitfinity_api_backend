@@ -800,6 +800,7 @@ module.exports.connectUserWithTrainer = async (req, res) => {
       landmark: landmark,
       area: area,
       pincode: pincode,
+      trainer_id
     };
 
     console.log("requeest===========spayload:",payload)
