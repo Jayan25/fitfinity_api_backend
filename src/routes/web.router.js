@@ -32,5 +32,8 @@ router.post("/update-lat-lon", authentication,validate(trainer.latlonValidation)
 
 router.get("/profile-detail", authentication, trainerController.profileData);
 
+// Public class plans
+const classController = require("../controllers/class.controller.js");
+router.get("/class-plans", classController.getClassPlans);
 
 module.exports=router

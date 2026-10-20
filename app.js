@@ -62,8 +62,16 @@ app.use((err, _req, res, _) => {
 
 sequelize
   .authenticate()
-  .then(() => {
+  .then(async () => {
     console.log("Database connected!");
+
+    try {
+      await sequelize.sync();
+      const { seedDefaultClassPlans } = require("./src/utils/classPlans.service");
+      await seedDefaultClassPlans();
+    } catch (syncErr) {
+      console.warn("Sync / seed notice:", syncErr.message);
+    }
 
     const PORT = process.env.PORT || 3001;
     app.listen(PORT, () => {

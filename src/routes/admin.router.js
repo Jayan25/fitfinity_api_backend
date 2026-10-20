@@ -32,8 +32,11 @@ router.get("/diet-payment",authentication,  adminController.getAlldietPlanPaymen
 // manully connect the trainer with user
 router.post("/connect-trainer",authentication,validate(admin.connectWithTrainerValidation), adminController.connectUserWithTrainer);
 
-
-
+// online classes management for admin
+const classController = require("../controllers/class.controller.js");
+router.get("/class-plans", authentication, classController.adminGetClassPlans);
+router.put("/class-plans/:id", authentication, classController.adminUpdateClassPlan);
+router.get("/class-subscriptions", authentication, classController.adminGetClassSubscriptions);
 
 module.exports = router;
 

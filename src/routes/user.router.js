@@ -35,4 +35,11 @@ router.post("/new", userController.new);
 router.post("/request-password-reset", userController.requestPasswordReset);
 router.post("/reset-password", userController.resetPassword);
 
+// online classes membership apis
+const classController = require("../controllers/class.controller.js");
+router.get("/class-plans", classController.getClassPlans);
+router.post("/create-class-order", authentication, classController.createClassOrder);
+router.post("/verify-class-payment", authentication, classController.verifyClassPayment);
+router.get("/class-subscriptions", authentication, classController.getUserClassSubscriptions);
+
 module.exports = router;

@@ -50,6 +50,11 @@ module.exports = (sequelize) => {
         allowNull: true,
       },
 
+      class_subscription_id: {
+        type: DataTypes.BIGINT,
+        allowNull: true,
+      },
+
       status: {
         type: DataTypes.STRING,
         allowNull: false,
@@ -89,6 +94,11 @@ module.exports = (sequelize) => {
     Payment.belongsTo(models.fitness_plan, {
       foreignKey: "fitness_plan_id",
       as: "fitness_plan",
+    });
+
+    Payment.belongsTo(models.class_subscriptions, {
+      foreignKey: "class_subscription_id",
+      as: "class_subscription",
     });
   };
 
