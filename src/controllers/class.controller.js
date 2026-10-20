@@ -295,10 +295,31 @@ module.exports.adminUpdateClassPlan = async function (req, res) {
 
     const updateData = {};
     if (name !== undefined) updateData.name = name;
-    if (monthly_rate_6m !== undefined) updateData.monthly_rate_6m = parseInt(monthly_rate_6m, 10);
-    if (monthly_rate_12m !== undefined) updateData.monthly_rate_12m = parseInt(monthly_rate_12m, 10);
-    if (six_month_price !== undefined) updateData.six_month_price = parseInt(six_month_price, 10);
-    if (yearly_price !== undefined) updateData.yearly_price = parseInt(yearly_price, 10);
+
+    if (six_month_price !== undefined) {
+      const sp = parseInt(six_month_price, 10);
+      updateData.six_month_price = sp;
+      if (monthly_rate_6m !== undefined && monthly_rate_6m !== null && monthly_rate_6m !== "") {
+        updateData.monthly_rate_6m = parseInt(monthly_rate_6m, 10);
+      } else {
+        updateData.monthly_rate_6m = Math.round(sp / (6 * 1.18));
+      }
+    } else if (monthly_rate_6m !== undefined) {
+      updateData.monthly_rate_6m = parseInt(monthly_rate_6m, 10);
+    }
+
+    if (yearly_price !== undefined) {
+      const yp = parseInt(yearly_price, 10);
+      updateData.yearly_price = yp;
+      if (monthly_rate_12m !== undefined && monthly_rate_12m !== null && monthly_rate_12m !== "") {
+        updateData.monthly_rate_12m = parseInt(monthly_rate_12m, 10);
+      } else {
+        updateData.monthly_rate_12m = Math.round(yp / (12 * 1.18));
+      }
+    } else if (monthly_rate_12m !== undefined) {
+      updateData.monthly_rate_12m = parseInt(monthly_rate_12m, 10);
+    }
+
     if (is_active !== undefined) updateData.is_active = Boolean(is_active);
 
     await class_plans.update(updateData, { where: { id } });
