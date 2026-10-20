@@ -37,9 +37,20 @@ router.post("/reset-password", userController.resetPassword);
 
 // online classes membership apis
 const classController = require("../controllers/class.controller.js");
+const optionalAuth = (req, res, next) => {
+  const token = req.header("Authorization")?.replace("Bearer ", "");
+  if (token) {
+    try {
+      const jwt = require("jsonwebtoken");
+      req.user = jwt.verify(token, "your_secret_key");
+    } catch (e) {}
+  }
+  next();
+};
+
 router.get("/class-plans", classController.getClassPlans);
 router.post("/create-class-order", authentication, classController.createClassOrder);
-router.post("/verify-class-payment", authentication, classController.verifyClassPayment);
+router.post("/verify-class-payment", optionalAuth, classController.verifyClassPayment);
 router.get("/class-subscriptions", authentication, classController.getUserClassSubscriptions);
 
 module.exports = router;
